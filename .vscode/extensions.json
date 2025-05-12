@@ -1,0 +1,86 @@
+{
+  "recommendations": [
+    // Essential formatting and linting
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    
+    // Node.js and JavaScript
+    "ms-vscode.vscode-node-azure-pack",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.npm-intellisense",
+    "christian-kohler.path-intellisense",
+    "leizongmin.node-module-intellisense",
+    
+    // Angular
+    "angular.ng-template",
+    "johnpapa.angular2",
+    "cyrilletuzi.angular-schematics",
+    "mikael.angular-beastcode",
+    
+    // TypeScript
+    "ms-vscode.vscode-typescript-next",
+    "usernamehw.errorlens",
+    
+    // Database and SQL
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-mysql",
+    "cweijan.vscode-mysql-client2",
+    
+    // Docker and DevOps
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+    "redhat.vscode-yaml",
+    
+    // Git and Version Control
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "github.copilot",
+    "github.copilot-chat",
+    
+    // Testing
+    "hbenl.vscode-test-explorer",
+    "kavod-io.vscode-jest-test-adapter",
+    "ms-vscode.test-adapter-converter",
+    
+    // REST API
+    "humao.rest-client",
+    "rangav.vscode-thunder-client",
+    "42crunch.vscode-openapi",
+    
+    // Utilities
+    "aaron-bond.better-comments",
+    "alefragnani.bookmarks",
+    "gruntfuggly.todo-tree",
+    "streetsidesoftware.code-spell-checker",
+    
+    // Documentation
+    "yzhang.markdown-all-in-one",
+    "shd101wyy.markdown-preview-enhanced",
+    "bierner.markdown-mermaid",
+    
+    // Theme and UI (optional)
+    "pkief.material-icon-theme",
+    "equinusocio.vsc-material-theme",
+    "github.github-vscode-theme",
+    
+    // Performance and Monitoring
+    "ms-vscode.vscode-json",
+    "redhat.vscode-xml",
+    "dotjoshjohnson.xml",
+    
+    // Environment and Configuration
+    "mikestead.dotenv",
+    "ms-vscode.vscode-json",
+    
+    // Code Quality
+    "sonarsource.sonarlint-vscode",
+    "codezombiech.gitignore"
+  ],
+  "unwantedRecommendations": [
+    // Conflicting extensions
+    "hookyqr.beautify",
+    "ms-vscode.vscode-typescript",
+    "formulahendry.code-runner"
+  ]
+}
