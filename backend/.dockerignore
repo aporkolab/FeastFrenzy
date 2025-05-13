@@ -1,0 +1,56 @@
+# Dependencies - MUST be excluded!
+# The container builds its own node_modules with Alpine-compatible native modules
+node_modules
+npm-debug.log
+
+# Environment files (secrets should come from Docker env)
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Logs
+logs
+*.log
+
+# Test files
+test
+tests
+*.test.js
+*.spec.js
+coverage
+.nyc_output
+
+# Development files
+.git
+.gitignore
+.eslintrc*
+.prettierrc*
+jest.config.js
+babel.config.js
+tsconfig.json
+*.md
+README*
+CHANGELOG*
+LICENSE*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (no need to copy these into the image)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Kubernetes
+k8s
+
+# Documentation
+docs
