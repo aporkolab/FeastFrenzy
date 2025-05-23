@@ -1,0 +1,124 @@
+# Multi-stage Docker build for production-optimized Node.js application
+# Optimized for security, performance, and minimal size
+
+# Stage 1: Build stage with full development tools
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install build dependencies for native modules
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including devDependencies)
+RUN npm ci --include=dev
+
+# Copy source code
+COPY . .
+
+# Build application (if you have a build step)
+# RUN npm run build
+
+# Run tests during build to catch issues early
+RUN npm run test:unit
+
+# Audit for security vulnerabilities
+RUN npm audit --audit-level=moderate
+
+# Stage 2: Production dependencies
+FROM node:18-alpine AS deps
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies with optimizations
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
+
+# Stage 3: Final production image
+FROM node:18-alpine AS production
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S feastfrenzy -u 1001 -G nodejs
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+# Set working directory
+WORKDIR /app
+
+# Copy production dependencies
+COPY --from=deps --chown=feastfrenzy:nodejs /app/node_modules ./node_modules
+
+# Copy application code
+COPY --chown=feastfrenzy:nodejs . .
+
+# Create necessary directories with correct permissions
+RUN mkdir -p logs uploads temp && \
+    chown -R feastfrenzy:nodejs logs uploads temp
+
+# Remove unnecessary files for production
+RUN rm -rf \
+    tests/ \
+    .vscode/ \
+    .git/ \
+    .github/ \
+    docs/ \
+    README.md \
+    .eslintrc.js \
+    .prettierrc \
+    jest.config.js \
+    nodemon.json \
+    *.test.js \
+    **/*.test.js
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV SHUTDOWN_TIMEOUT=30000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:${PORT}/health/liveness', (res) => { \
+        if (res.statusCode === 200) process.exit(0); else process.exit(1); \
+    }).on('error', () => process.exit(1))"
+
+# Switch to non-root user
+USER feastfrenzy
+
+# Expose port
+EXPOSE 3000
+
+# Use dumb-init for proper signal handling and zombie process reaping
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the application
+CMD ["node", "server.js"]
+
+# Build arguments for metadata
+ARG VERSION=latest
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Add labels for better container management
+LABEL maintainer="FeastFrenzy Team" \
+      version="${VERSION}" \
+      description="FeastFrenzy Backend API - Production" \
+      org.opencontainers.image.title="FeastFrenzy Backend" \
+      org.opencontainers.image.description="Production-ready backend API for FeastFrenzy application" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.vendor="FeastFrenzy" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/dr.porkolabadam/FeastFrenzy"
