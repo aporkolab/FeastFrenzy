@@ -1,0 +1,17 @@
+# Nixpacks configuration for FeastFrenzy Backend
+# This ensures consistent builds on Railway
+
+[phases.setup]
+nixPkgs = ["nodejs-18_x"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start:prod"
+
+[variables]
+NODE_ENV = "production"
