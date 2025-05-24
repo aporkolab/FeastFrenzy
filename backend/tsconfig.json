@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "noEmit": true
+  },
+  "exclude": ["src/**/*", "your-other-src/**/*"],
+  "files": ["placeholder.ts"]
+}
