@@ -1,0 +1,46 @@
+# Dependencies - container builds its own
+node_modules
+npm-debug.log
+
+# Build outputs (container builds fresh)
+dist
+.angular
+
+# Environment files
+.env
+.env.*
+
+# Test files
+coverage
+e2e
+*.spec.ts
+
+# Development files
+.git
+.gitignore
+.eslintrc*
+.prettierrc*
+*.md
+README*
+CHANGELOG*
+LICENSE*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+.editorconfig
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Misc
+*.log
+tmp
