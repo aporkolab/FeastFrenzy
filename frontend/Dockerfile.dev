@@ -1,0 +1,30 @@
+# Development Dockerfile for Angular frontend
+FROM node:20-alpine
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+# Set working directory
+WORKDIR /usr/src/app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S app -u 1001 -G nodejs
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies with legacy peer deps flag
+RUN npm ci --legacy-peer-deps && npm cache clean --force
+
+# Change ownership of node_modules
+RUN chown -R app:nodejs node_modules
+
+# Switch to non-root user
+USER app
+
+# Expose port
+EXPOSE 4200
+
+# Start development server with hot reload
+CMD ["dumb-init", "npm", "start", "--", "--host", "0.0.0.0", "--poll", "2000"]
