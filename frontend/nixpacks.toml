@@ -1,0 +1,18 @@
+# Nixpacks configuration for Angular frontend
+
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "nginx"]
+
+[phases.install]
+cmds = ["npm ci --legacy-peer-deps"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "nginx -g 'daemon off;' -c /etc/nginx/nginx.conf"
+
+[staticAssets]
+# Copy built files to nginx html directory
+from = "dist/feastfrenzy"
+to = "/usr/share/nginx/html"
