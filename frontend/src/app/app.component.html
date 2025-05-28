@@ -1,0 +1,160 @@
+<!-- Skip Link for keyboard users -->
+<app-skip-link></app-skip-link>
+
+<!-- Global Toast Container -->
+<app-toast-container></app-toast-container>
+
+<!-- Global Loading Overlay -->
+<app-loading-spinner [global]="true" [overlay]="true" message="Loading..."></app-loading-spinner>
+
+<header>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary" aria-label="Main navigation">
+    <div class="container-fluid">
+      <a class="navbar-brand" routerLink="/dashboard">
+        <span class="sr-only">FeastFrenzy - </span>FeastFrenzy
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+
+        @if (isAuthenticated) {
+          <ul class="navbar-nav me-auto" role="menubar">
+            <li class="nav-item" role="none">
+              <a
+                class="nav-link"
+                routerLink="/dashboard"
+                routerLinkActive="active"
+                role="menuitem"
+                [attr.aria-current]="isRouteActive('/dashboard') ? 'page' : null"
+              >Dashboard</a>
+            </li>
+            @if (canManageEmployees()) {
+              <li class="nav-item" role="none">
+                <a
+                  class="nav-link"
+                  routerLink="/employees"
+                  routerLinkActive="active"
+                  role="menuitem"
+                  [attr.aria-current]="isRouteActive('/employees') ? 'page' : null"
+                >Employees</a>
+              </li>
+            }
+            <li class="nav-item" role="none">
+              <a
+                class="nav-link"
+                routerLink="/products"
+                routerLinkActive="active"
+                role="menuitem"
+                [attr.aria-current]="isRouteActive('/products') ? 'page' : null"
+              >Products</a>
+            </li>
+            <li class="nav-item" role="none">
+              <a
+                class="nav-link"
+                routerLink="/purchases"
+                routerLinkActive="active"
+                role="menuitem"
+                [attr.aria-current]="isRouteActive('/purchases') ? 'page' : null"
+              >Purchases</a>
+            </li>
+            <li class="nav-item" role="none">
+              <a
+                class="nav-link"
+                routerLink="/purchase-report"
+                routerLinkActive="active"
+                role="menuitem"
+                [attr.aria-current]="isRouteActive('/purchase-report') ? 'page' : null"
+              >Purchase Report</a>
+            </li>
+            <li class="nav-item" role="none">
+              <a
+                class="nav-link"
+                routerLink="/product-report"
+                routerLinkActive="active"
+                role="menuitem"
+                [attr.aria-current]="isRouteActive('/product-report') ? 'page' : null"
+              >Product Report</a>
+            </li>
+            @if (canManageEmployees()) {
+              <li class="nav-item" role="none">
+                <a
+                  class="nav-link"
+                  routerLink="/employee-report"
+                  routerLinkActive="active"
+                  role="menuitem"
+                  [attr.aria-current]="isRouteActive('/employee-report') ? 'page' : null"
+                >Employee Report</a>
+              </li>
+            }
+          </ul>
+        }
+
+
+        <ul class="navbar-nav ms-auto" role="menubar">
+
+          @if (isAuthenticated && currentUser) {
+            <li class="nav-item" role="none">
+              <span class="nav-link" role="status" aria-live="polite">
+                <span
+                  class="badge"
+                  [class.bg-danger]="currentUser.role === 'admin'"
+                  [class.bg-warning]="currentUser.role === 'manager'"
+                  [class.bg-info]="currentUser.role === 'employee'"
+                  aria-hidden="true"
+                >
+                  {{ currentUser.role }}
+                </span>
+                <span class="sr-only">Logged in as {{ currentUser.role }}: </span>
+                {{ currentUser.name }}
+              </span>
+            </li>
+            <li class="nav-item" role="none">
+              <button
+                class="btn btn-outline-light btn-sm ms-2"
+                (click)="logout()"
+                role="menuitem"
+              >
+                Logout
+              </button>
+            </li>
+          }
+
+
+          @if (!isAuthenticated) {
+            <li class="nav-item" role="none">
+              <a
+                class="nav-link"
+                routerLink="/login"
+                routerLinkActive="active"
+                role="menuitem"
+                [attr.aria-current]="isRouteActive('/login') ? 'page' : null"
+              >Login</a>
+            </li>
+            <li class="nav-item" role="none">
+              <a
+                class="nav-link"
+                routerLink="/register"
+                routerLinkActive="active"
+                role="menuitem"
+                [attr.aria-current]="isRouteActive('/register') ? 'page' : null"
+              >Register</a>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="main-content" class="container mt-4" role="main">
+  <router-outlet></router-outlet>
+</main>
