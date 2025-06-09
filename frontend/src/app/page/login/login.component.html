@@ -1,0 +1,129 @@
+<div class="container">
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h1 class="card-title text-center mb-4 h2">Login</h1>
+
+          <!-- Success Message -->
+          <div 
+            *ngIf="successMessage" 
+            class="alert alert-success alert-dismissible fade show" 
+            role="alert"
+            aria-live="polite"
+          >
+            {{ successMessage }}
+            <button 
+              type="button" 
+              class="btn-close" 
+              (click)="successMessage = ''"
+              aria-label="Dismiss success message"
+            ></button>
+          </div>
+
+          <!-- Error Message -->
+          <div 
+            *ngIf="errorMessage" 
+            class="alert alert-danger alert-dismissible fade show" 
+            role="alert"
+            aria-live="assertive"
+          >
+            {{ errorMessage }}
+            <button 
+              type="button" 
+              class="btn-close" 
+              (click)="errorMessage = ''"
+              aria-label="Dismiss error message"
+            ></button>
+          </div>
+
+          <form 
+            [formGroup]="form" 
+            (ngSubmit)="onSubmit()" 
+            novalidate
+            aria-labelledby="login-form-title"
+          >
+            <span id="login-form-title" class="sr-only">Login form</span>
+            
+            <!-- Email Field -->
+            <app-form-field
+              label="Email address"
+              fieldId="email"
+              [required]="true"
+              [showError]="isFieldInvalid('email')"
+              [errorMessage]="getFieldError('email')">
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                formControlName="email"
+                [class.is-invalid]="isFieldInvalid('email')"
+                [class.is-valid]="isFieldValid('email')"
+                placeholder="Enter your email"
+                autocomplete="email"
+                [attr.aria-invalid]="isFieldInvalid('email')"
+                [attr.aria-describedby]="isFieldInvalid('email') ? 'email-error' : null"
+                aria-required="true"
+              >
+            </app-form-field>
+
+            <!-- Password Field -->
+            <app-form-field
+              label="Password"
+              fieldId="password"
+              [required]="true"
+              [showError]="isFieldInvalid('password')"
+              [errorMessage]="getFieldError('password')">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="password" 
+                formControlName="password"
+                [class.is-invalid]="isFieldInvalid('password')"
+                [class.is-valid]="isFieldValid('password')"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                [attr.aria-invalid]="isFieldInvalid('password')"
+                [attr.aria-describedby]="isFieldInvalid('password') ? 'password-error' : null"
+                aria-required="true"
+              >
+            </app-form-field>
+
+            <!-- Remember Me -->
+            <div class="mb-3 form-check">
+              <input 
+                type="checkbox" 
+                class="form-check-input" 
+                id="rememberMe" 
+                formControlName="rememberMe"
+              >
+              <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="isLoading"
+                [attr.aria-busy]="isLoading"
+              >
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span *ngIf="isLoading" class="sr-only">Signing in, please wait...</span>
+                {{ isLoading ? 'Signing in...' : 'Sign In' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Register Link -->
+          <div class="text-center mt-4">
+            <p class="mb-0">
+              Don't have an account? 
+              <a routerLink="/register" class="text-decoration-none">Register here</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
