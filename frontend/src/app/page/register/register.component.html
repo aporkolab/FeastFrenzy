@@ -1,0 +1,182 @@
+<div class="container">
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h1 class="card-title text-center mb-4 h2">Create Account</h1>
+
+          <!-- Error Message -->
+          <div 
+            *ngIf="errorMessage" 
+            class="alert alert-danger alert-dismissible fade show" 
+            role="alert"
+            aria-live="assertive"
+          >
+            {{ errorMessage }}
+            <button 
+              type="button" 
+              class="btn-close" 
+              (click)="errorMessage = ''"
+              aria-label="Dismiss error message"
+            ></button>
+          </div>
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate aria-labelledby="register-heading">
+            <span id="register-heading" class="sr-only">Registration form</span>
+            
+            <!-- Name Field -->
+            <app-form-field
+              label="Full Name"
+              fieldId="name"
+              [required]="true"
+              [showError]="isFieldInvalid('name')"
+              [errorMessage]="getFieldError('name')">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="name" 
+                formControlName="name"
+                [class.is-invalid]="isFieldInvalid('name')"
+                [class.is-valid]="isFieldValid('name')"
+                placeholder="Enter your full name"
+                autocomplete="name"
+                aria-required="true"
+                [attr.aria-invalid]="isFieldInvalid('name')"
+                [attr.aria-describedby]="isFieldInvalid('name') ? 'name-error' : null"
+              >
+            </app-form-field>
+
+            <!-- Email Field -->
+            <app-form-field
+              label="Email address"
+              fieldId="email"
+              [required]="true"
+              [showError]="isFieldInvalid('email')"
+              [errorMessage]="getFieldError('email')">
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                formControlName="email"
+                [class.is-invalid]="isFieldInvalid('email')"
+                [class.is-valid]="isFieldValid('email')"
+                placeholder="Enter your email"
+                autocomplete="email"
+                aria-required="true"
+                [attr.aria-invalid]="isFieldInvalid('email')"
+                [attr.aria-describedby]="isFieldInvalid('email') ? 'email-error' : null"
+              >
+            </app-form-field>
+
+            <!-- Password Field -->
+            <app-form-field
+              label="Password"
+              fieldId="password"
+              [required]="true"
+              [showError]="isFieldInvalid('password')"
+              [errorMessage]="getFieldError('password')">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="password" 
+                formControlName="password"
+                [class.is-invalid]="isFieldInvalid('password')"
+                [class.is-valid]="isFieldValid('password')"
+                placeholder="Create a strong password"
+                autocomplete="new-password"
+                aria-required="true"
+                [attr.aria-invalid]="isFieldInvalid('password')"
+                aria-describedby="password-requirements"
+              >
+            </app-form-field>
+            
+            <!-- Password Strength Indicator -->
+            @if (form.get('password')?.value) {
+              <div class="mb-3 mt-n2" id="password-requirements">
+                <div 
+                  class="progress" 
+                  style="height: 5px;"
+                  role="progressbar"
+                  [attr.aria-valuenow]="getPasswordStrength().strength"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-label]="'Password strength: ' + getPasswordStrength().label"
+                >
+                  <div 
+                    class="progress-bar"
+                    [class]="getPasswordStrength().class"
+                    [style.width.%]="getPasswordStrength().strength"
+                  ></div>
+                </div>
+                <small class="text-muted" aria-live="polite">
+                  Password strength: {{ getPasswordStrength().label }}
+                </small>
+                
+                <!-- Password Requirements Checklist -->
+                <ul class="mt-2 list-unstyled" aria-label="Password requirements">
+                  @for (req of getPasswordRequirements(); track req.label) {
+                    <li class="small" [class.text-success]="req.met" [class.text-muted]="!req.met">
+                      <span aria-hidden="true">{{ req.met ? '✓' : '○' }}</span>
+                      <span class="sr-only">{{ req.met ? 'Requirement met:' : 'Requirement not met:' }}</span>
+                      {{ req.label }}
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+
+            <!-- Confirm Password Field -->
+            <app-form-field
+              label="Confirm Password"
+              fieldId="confirmPassword"
+              [required]="true"
+              [showError]="isFieldInvalid('confirmPassword')"
+              [errorMessage]="getFieldError('confirmPassword')">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="confirmPassword" 
+                formControlName="confirmPassword"
+                [class.is-invalid]="isFieldInvalid('confirmPassword')"
+                [class.is-valid]="isFieldValid('confirmPassword')"
+                placeholder="Confirm your password"
+                autocomplete="new-password"
+                aria-required="true"
+                [attr.aria-invalid]="isFieldInvalid('confirmPassword')"
+                [attr.aria-describedby]="isFieldInvalid('confirmPassword') ? 'confirmPassword-error' : null"
+              >
+            </app-form-field>
+
+            <!-- Submit Button -->
+            <div class="d-grid mt-4">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="isLoading"
+                [attr.aria-busy]="isLoading"
+                aria-label="Create your account"
+              >
+                <span 
+                  *ngIf="isLoading" 
+                  class="spinner-border spinner-border-sm me-2" 
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <span *ngIf="isLoading" class="sr-only">Creating account, please wait...</span>
+                {{ isLoading ? 'Creating account...' : 'Create Account' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Login Link -->
+          <div class="text-center mt-4">
+            <p class="mb-0">
+              Already have an account? 
+              <a routerLink="/login" class="text-decoration-none">Sign in here</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
