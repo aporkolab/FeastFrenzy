@@ -1,0 +1,115 @@
+<!-- Page Header -->
+<header class="page-header mb-4">
+  <h1>Popular Products Report</h1>
+</header>
+
+<!-- Filter Form -->
+<section class="card mb-4" aria-labelledby="filter-heading">
+  <div class="card-body">
+    <h2 id="filter-heading" class="sr-only">Report Options</h2>
+    <form class="row g-3 align-items-end" aria-label="Report options">
+      <div class="col-md-3">
+        <label class="form-label" for="limitSelect">Show Top</label>
+        <select
+          class="form-select"
+          id="limitSelect"
+          [(ngModel)]="limit"
+          name="limit"
+          (ngModelChange)="onLimitChange()"
+          aria-describedby="limit-help"
+        >
+          <option [ngValue]="10">10 Products</option>
+          <option [ngValue]="20">20 Products</option>
+          <option [ngValue]="50">50 Products</option>
+        </select>
+        <span id="limit-help" class="sr-only">Choose how many products to display</span>
+      </div>
+      <div class="col-md-2">
+        <button
+          class="btn btn-outline-primary w-100"
+          (click)="loadPopularProducts()"
+          [disabled]="isLoading"
+          [attr.aria-busy]="isLoading"
+          aria-label="Refresh report"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          }
+          Refresh
+        </button>
+      </div>
+      <div class="col-md-2">
+        <button
+          class="btn btn-outline-secondary w-100"
+          (click)="goBack()"
+          aria-label="Go back to products list"
+        >
+          <span aria-hidden="true">←</span> Back
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <div role="status" aria-live="polite">
+    <span class="sr-only">Loading product report...</span>
+    <app-table-skeleton [rows]="8" [columns]="5"></app-table-skeleton>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state
+    [message]="error"
+    (retry)="loadPopularProducts()"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && products.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No product data"
+    message="No product consumption data available yet."
+    [showRetry]="false"
+  ></app-error-state>
+}
+
+<!-- Results Table -->
+@if (!isLoading && !error && products.length > 0) {
+  <section class="card" aria-labelledby="results-heading">
+    <div class="card-header">
+      <h2 id="results-heading" class="h5 mb-0">Top {{ products.length }} Popular Products</h2>
+    </div>
+    <div class="table-responsive" role="region" aria-label="Product consumption data">
+      <table class="table table-hover mb-0">
+        <caption class="sr-only">
+          Popular products ranked by total orders.
+          Showing {{ products.length }} products.
+        </caption>
+        <thead class="table-light">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="text-center">Total Orders</th>
+            <th scope="col" class="text-center">Total Quantity</th>
+            <th scope="col" class="text-end">Unit Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products; track product.id; let i = $index) {
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td>{{ product.name }}</td>
+              <td class="text-center">{{ product.orderCount }}</td>
+              <td class="text-center">{{ product.totalQuantity }}</td>
+              <td class="text-end">{{ product.price | currency }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
