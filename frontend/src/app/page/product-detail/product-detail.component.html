@@ -1,0 +1,86 @@
+<!-- Page Header -->
+<header class="page-header mb-4">
+  <h1>{{ pageTitle }}</h1>
+</header>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <div class="row" role="status" aria-live="polite">
+    <span class="sr-only">Loading product details...</span>
+    <div class="col-md-6">
+      <app-card-skeleton [showImage]="false" [textLines]="4" [showAction]="true"></app-card-skeleton>
+    </div>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="loadProduct()"
+    actionText="Go Back"
+    (action)="goBack()"
+  ></app-error-state>
+}
+
+<!-- Create/Edit Form -->
+@if (!isLoading && !error && (mode === 'create' || mode === 'edit')) {
+  <section class="card" aria-labelledby="form-heading">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h2 id="form-heading" class="h4 mb-0">{{ pageTitle }}</h2>
+      @if (product?.id) {
+        <span class="badge bg-secondary" aria-label="Product ID">
+          #{{ product!.id }}
+        </span>
+      }
+    </div>
+    <div class="card-body">
+      <app-product-form
+        [product]="product"
+        [loading]="isSaving"
+        (save)="onSave($event)"
+        (cancel)="onCancel()"
+      ></app-product-form>
+    </div>
+  </section>
+}
+
+<!-- View Mode (if implemented) -->
+@if (!isLoading && !error && mode === 'view' && product) {
+  <section class="card" aria-labelledby="details-heading">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h2 id="details-heading" class="h4 mb-0">Product Details</h2>
+      <span class="badge bg-secondary" aria-label="Product ID">
+        #{{ product.id }}
+      </span>
+    </div>
+    <div class="card-body">
+      <dl>
+        <dt class="sr-only">Product Name</dt>
+        <dd class="card-title h2">{{ product.name }}</dd>
+        
+        <dt class="sr-only">Price</dt>
+        <dd class="card-text fs-4 text-success">{{ product.price | currency }}</dd>
+      </dl>
+      
+      <hr>
+      
+      <nav class="d-flex gap-2" aria-label="Product actions">
+        <button 
+          class="btn btn-outline-secondary" 
+          (click)="goBack()"
+          aria-label="Go back to products list"
+        >
+          <span aria-hidden="true">←</span> Go Back
+        </button>
+        <a 
+          [routerLink]="['/products', product.id]" 
+          class="btn btn-primary"
+          [attr.aria-label]="'Edit product ' + product.name"
+        >
+          Edit Product
+        </a>
+      </nav>
+    </div>
+  </section>
+}
