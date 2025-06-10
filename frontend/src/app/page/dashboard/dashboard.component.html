@@ -1,0 +1,78 @@
+<div class="container">
+  <!-- Welcome Card -->
+  <header class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-primary text-white">
+        <div class="card-body py-4">
+          <h1 class="card-title mb-2">
+            {{ getGreeting() }}, {{ currentUser?.name || 'User' }}!
+          </h1>
+          <p class="card-text mb-0 opacity-75">
+            Welcome to FeastFrenzy. What would you like to do today?
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Cards -->
+  <nav aria-label="Main features navigation">
+    <h2 class="sr-only">Available Features</h2>
+    <div class="row g-4">
+      @for (card of navigationCards; track card.route) {
+        @if (canAccessCard(card)) {
+          <div class="col-md-6 col-lg-3">
+            <a 
+              [routerLink]="card.route" 
+              class="text-decoration-none"
+              [attr.aria-label]="card.title + ': ' + card.description"
+            >
+              <div class="card h-100 navigation-card">
+                <div class="card-body text-center">
+                  <div class="card-icon mb-3" aria-hidden="true">{{ card.icon }}</div>
+                  <h3 class="card-title h5">{{ card.title }}</h3>
+                  <p class="card-text text-muted small">{{ card.description }}</p>
+                </div>
+              </div>
+            </a>
+          </div>
+        }
+      }
+    </div>
+  </nav>
+
+  <!-- Account Information -->
+  @if (currentUser) {
+    <section class="row mt-5" aria-labelledby="account-heading">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h2 id="account-heading" class="h5 mb-0">Account Information</h2>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-4 text-muted">Name</dt>
+              <dd class="col-sm-8">{{ currentUser.name }}</dd>
+              
+              <dt class="col-sm-4 text-muted">Email</dt>
+              <dd class="col-sm-8">{{ currentUser.email }}</dd>
+              
+              <dt class="col-sm-4 text-muted">Role</dt>
+              <dd class="col-sm-8">
+                <span 
+                  class="badge" 
+                  [class.bg-danger]="currentUser.role === 'admin'"
+                  [class.bg-warning]="currentUser.role === 'manager'"
+                  [class.bg-info]="currentUser.role === 'employee'"
+                >
+                  {{ currentUser.role | titlecase }}
+                </span>
+                <span class="sr-only">{{ currentUser.role }}</span>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+</div>
