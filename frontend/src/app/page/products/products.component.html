@@ -1,0 +1,282 @@
+<!-- Page Header with Add Button -->
+<header class="page-header mb-4 d-flex justify-content-between align-items-center">
+  <h1>Products</h1>
+  <button
+    class="btn btn-primary"
+    (click)="openCreateModal()"
+    aria-label="Add a new product">
+    + Add Product
+  </button>
+</header>
+
+<!-- Filters Section -->
+<section class="filters card mb-4 p-3" aria-labelledby="filters-heading">
+  <h2 id="filters-heading" class="sr-only">Filter Products</h2>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label for="filter-name" class="form-label sr-only">Search by product name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="filter-name"
+        [(ngModel)]="filters.name"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search by name..."
+        aria-describedby="filter-hint"
+      />
+    </div>
+    <div class="col-md-3">
+      <label for="filter-min-price" class="form-label sr-only">Minimum price</label>
+      <input
+        type="number"
+        class="form-control"
+        id="filter-min-price"
+        [(ngModel)]="filters.minPrice"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Min price"
+        [attr.aria-label]="'Minimum price filter'"
+        min="0"
+      />
+    </div>
+    <div class="col-md-3">
+      <label for="filter-max-price" class="form-label sr-only">Maximum price</label>
+      <input
+        type="number"
+        class="form-control"
+        id="filter-max-price"
+        [(ngModel)]="filters.maxPrice"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Max price"
+        [attr.aria-label]="'Maximum price filter'"
+        min="0"
+      />
+    </div>
+    <div class="col-md-2">
+      <button
+        class="btn btn-outline-secondary w-100"
+        (click)="clearFilters()"
+        aria-label="Clear all filters"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
+  <div id="filter-hint" class="sr-only">
+    Use these fields to filter the products list. Results update automatically as you type.
+  </div>
+</section>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <div role="status" aria-live="polite">
+    <span class="sr-only">Loading products...</span>
+    <app-table-skeleton [rows]="8" [columns]="4"></app-table-skeleton>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state
+    [message]="error"
+    (retry)="loadProducts()"
+    [retrying]="isLoading"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && products.length === 0) {
+  <div class="text-center py-5">
+    <div class="mb-3">
+      <span style="font-size: 4rem;">📦</span>
+    </div>
+    <h3>No products found</h3>
+    <p class="text-muted">
+      @if (filters.name || filters.minPrice || filters.maxPrice) {
+        Try adjusting your search criteria or clear the filters.
+      } @else {
+        Get started by adding your first product.
+      }
+    </p>
+    <div class="d-flex gap-2 justify-content-center">
+      @if (filters.name || filters.minPrice || filters.maxPrice) {
+        <button class="btn btn-outline-secondary" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      }
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        + Add Product
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Data Table -->
+@if (!isLoading && !error && products.length > 0) {
+  <div class="table-responsive" role="region" aria-label="Products data table">
+    <table class="table table-hover" aria-describedby="table-info">
+      <caption class="sr-only" id="products-table-caption">
+        List of products showing ID, name, price, and available actions.
+        Currently showing {{ products.length }} of {{ meta.total }} products.
+      </caption>
+      <thead class="table-light">
+        <tr>
+          <th
+            scope="col"
+            (click)="sortBy('id')"
+            (keydown.enter)="sortBy('id')"
+            (keydown.space)="sortBy('id'); $event.preventDefault()"
+            class="sortable"
+            tabindex="0"
+            role="columnheader"
+            [attr.aria-sort]="sortField === 'id' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+          >
+            <span class="d-flex align-items-center gap-1">
+              ID
+              <span class="sort-icon" aria-hidden="true">{{ getSortIcon('id') }}</span>
+            </span>
+          </th>
+          <th
+            scope="col"
+            (click)="sortBy('name')"
+            (keydown.enter)="sortBy('name')"
+            (keydown.space)="sortBy('name'); $event.preventDefault()"
+            class="sortable"
+            tabindex="0"
+            role="columnheader"
+            [attr.aria-sort]="sortField === 'name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+          >
+            <span class="d-flex align-items-center gap-1">
+              Name
+              <span class="sort-icon" aria-hidden="true">{{ getSortIcon('name') }}</span>
+            </span>
+          </th>
+          <th
+            scope="col"
+            (click)="sortBy('price')"
+            (keydown.enter)="sortBy('price')"
+            (keydown.space)="sortBy('price'); $event.preventDefault()"
+            class="sortable"
+            tabindex="0"
+            role="columnheader"
+            [attr.aria-sort]="sortField === 'price' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+          >
+            <span class="d-flex align-items-center gap-1">
+              Price
+              <span class="sort-icon" aria-hidden="true">{{ getSortIcon('price') }}</span>
+            </span>
+          </th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of products; track product.id) {
+          <tr>
+            <td>{{ product.id }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.price | currency }}</td>
+            <td class="table-actions">
+              <button
+                (click)="openEditModal(product)"
+                class="btn btn-sm btn-outline-primary"
+                [attr.aria-label]="'Edit ' + product.name"
+              >Edit</button>
+              <button
+                (click)="deleteProduct(product)"
+                class="btn btn-sm btn-outline-danger"
+                [attr.aria-label]="'Delete ' + product.name"
+              >Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Pagination -->
+@if (meta.totalPages > 0 && !error) {
+  <div
+    class="pagination-wrapper d-flex justify-content-between align-items-center flex-wrap gap-3 mt-3"
+    role="region"
+    aria-label="Pagination controls"
+  >
+    <div id="table-info" class="pagination-info text-muted" aria-live="polite">
+      Showing {{ (meta.page - 1) * meta.limit + 1 }} -
+      {{ meta.page * meta.limit > meta.total ? meta.total : meta.page * meta.limit }}
+      of {{ meta.total }} products
+    </div>
+
+    <nav aria-label="Products pagination">
+      <ul class="pagination mb-0">
+        <li class="page-item" [class.disabled]="!meta.hasPrevPage">
+          <button
+            class="page-link"
+            (click)="previousPage()"
+            [disabled]="!meta.hasPrevPage"
+            aria-label="Go to previous page"
+          >
+            <span aria-hidden="true">←</span>
+            <span class="d-none d-sm-inline"> Previous</span>
+          </button>
+        </li>
+
+        @for (pageNum of getPageNumbers(); track pageNum) {
+          <li class="page-item" [class.active]="pageNum === meta.page">
+            <button
+              class="page-link"
+              (click)="goToPage(pageNum)"
+              [attr.aria-label]="'Go to page ' + pageNum"
+              [attr.aria-current]="pageNum === meta.page ? 'page' : null"
+            >
+              {{ pageNum }}
+            </button>
+          </li>
+        }
+
+        <li class="page-item" [class.disabled]="!meta.hasNextPage">
+          <button
+            class="page-link"
+            (click)="nextPage()"
+            [disabled]="!meta.hasNextPage"
+            aria-label="Go to next page"
+          >
+            <span class="d-none d-sm-inline">Next </span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="page-size d-flex align-items-center gap-2">
+      <label for="page-size-select" class="mb-0 text-muted">Items per page:</label>
+      <select
+        id="page-size-select"
+        class="form-select form-select-sm"
+        style="width: auto;"
+        [ngModel]="meta.limit"
+        (ngModelChange)="onPageSizeChange($event)"
+        aria-label="Select number of items per page"
+      >
+        @for (size of pageSizeOptions; track size) {
+          <option [value]="size">{{ size }}</option>
+        }
+      </select>
+    </div>
+  </div>
+}
+
+<!-- Create/Edit Modal -->
+<app-modal
+  [isOpen]="showModal"
+  [title]="modalTitle"
+  [loading]="isSaving"
+  (close)="closeModal()">
+  <ng-container modal-body>
+    <app-product-form
+      [product]="selectedProduct"
+      [loading]="isSaving"
+      (save)="onSave($event)"
+      (cancel)="closeModal()">
+    </app-product-form>
+  </ng-container>
+</app-modal>

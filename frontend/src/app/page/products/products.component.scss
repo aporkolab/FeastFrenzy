@@ -1,0 +1,54 @@
+// Products Component Styles
+
+// Sortable table headers
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .sort-icon {
+    margin-left: 0.25rem;
+    opacity: 0.5;
+  }
+}
+
+// Table actions
+.table-actions {
+  white-space: nowrap;
+
+  .btn {
+    margin-right: 0.25rem;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+// Responsive table
+.table-responsive {
+  border-radius: 0.5rem;
+  border: 1px solid var(--bs-border-color);
+  overflow: hidden;
+
+  .table {
+    margin-bottom: 0;
+  }
+}
+
+// Pagination wrapper
+.pagination-wrapper {
+  padding: 1rem;
+  background: var(--bs-tertiary-bg);
+  border-radius: 0.5rem;
+}
+
+// Actions section
+.actions {
+  padding-top: 1rem;
+  border-top: 1px solid var(--bs-border-color);
+}
