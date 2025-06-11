@@ -1,0 +1,124 @@
+<!-- Page Header -->
+<header class="d-flex justify-content-between align-items-center mb-4 page-header">
+  <h1>Employee Consumption Report</h1>
+  <a 
+    routerLink="/dashboard" 
+    class="btn btn-outline-secondary"
+    aria-label="Go back to dashboard"
+  >
+    <span aria-hidden="true">←</span> Back to Dashboard
+  </a>
+</header>
+
+<!-- Month/Year Filter -->
+<section class="card mb-4" aria-labelledby="filter-heading">
+  <div class="card-body">
+    <h2 id="filter-heading" class="sr-only">Report Filters</h2>
+    <form class="row g-3 align-items-end" role="search" aria-label="Filter employee report">
+      <div class="col-md-3">
+        <label class="form-label" for="monthSelect">Month</label>
+        <select 
+          class="form-select" 
+          id="monthSelect"
+          [(ngModel)]="month" 
+          (ngModelChange)="onMonthChange()"
+          name="month"
+          aria-describedby="month-help"
+        >
+          <option [value]="0">January</option>
+          <option [value]="1">February</option>
+          <option [value]="2">March</option>
+          <option [value]="3">April</option>
+          <option [value]="4">May</option>
+          <option [value]="5">June</option>
+          <option [value]="6">July</option>
+          <option [value]="7">August</option>
+          <option [value]="8">September</option>
+          <option [value]="9">October</option>
+          <option [value]="10">November</option>
+          <option [value]="11">December</option>
+        </select>
+        <span id="month-help" class="sr-only">Select a month to filter the report</span>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="yearInput">Year</label>
+        <input 
+          type="number"
+          id="yearInput"
+          class="form-control" 
+          [(ngModel)]="year" 
+          (ngModelChange)="onMonthChange()"
+          name="year"
+          min="2020"
+          max="2030"
+          aria-describedby="year-help"
+        >
+        <span id="year-help" class="sr-only">Enter a year between 2020 and 2030</span>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <div role="status" aria-live="polite">
+    <span class="sr-only">Loading employee report...</span>
+    <app-table-skeleton [rows]="8" [columns]="2"></app-table-skeleton>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="loadData()"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && employees.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No employees found"
+    message="There are no employees in the system yet."
+    [showRetry]="false"
+  ></app-error-state>
+}
+
+<!-- Results Table -->
+@if (!isLoading && !error && employees.length > 0) {
+  <section class="card" aria-labelledby="results-heading">
+    <div class="card-header">
+      <h2 id="results-heading" class="h5 mb-0">Employee Consumption Summary</h2>
+    </div>
+    <div class="table-responsive" role="region" aria-label="Employee consumption data">
+      <table class="table table-hover mb-0">
+        <caption class="sr-only">
+          Employee consumption summary showing {{ employees.length }} employees with their monthly consumption values.
+        </caption>
+        <thead class="table-light">
+          <tr>
+            <th scope="col">Employee Name</th>
+            <th scope="col" class="text-end">Actual Spending</th>
+            <th scope="col" class="text-end">Monthly Budget</th>
+            <th scope="col" class="text-end">Remaining</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (employee of employees; track employee.id) {
+            <tr>
+              <td>{{ employee.name }}</td>
+              <td class="text-end">{{ getSpending(employee.id) | currency }}</td>
+              <td class="text-end">{{ employee.monthlyConsumptionValue | currency }}</td>
+              <td class="text-end"
+                  [class.text-danger]="employee.monthlyConsumptionValue - getSpending(employee.id) < 0"
+                  [class.text-success]="employee.monthlyConsumptionValue - getSpending(employee.id) >= 0">
+                {{ employee.monthlyConsumptionValue - getSpending(employee.id) | currency }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
