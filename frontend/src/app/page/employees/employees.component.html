@@ -1,0 +1,226 @@
+<!-- Page Header with Add Button -->
+<header class="page-header mb-4 d-flex justify-content-between align-items-center">
+  <h1>Employees</h1>
+  <button
+    class="btn btn-primary"
+    (click)="openCreateModal()"
+    aria-label="Add a new employee">
+    + Add Employee
+  </button>
+</header>
+
+<!-- Summary Card -->
+@if (!isLoading && !error && employees.length > 0) {
+  <section class="card mb-4" aria-labelledby="summary-heading">
+    <div class="card-body">
+      <h2 id="summary-heading" class="card-title h5">Monthly Consumption Summary</h2>
+      <p class="card-text display-6" aria-live="polite">
+        <span class="sr-only">Total monthly consumption: </span>
+        {{ monthlyConsumptionValue | currency }}
+      </p>
+    </div>
+  </section>
+}
+
+<!-- Filters Section -->
+<section class="filters card mb-4 p-3" aria-labelledby="filters-heading">
+  <h2 id="filters-heading" class="sr-only">Filter Employees</h2>
+  <div class="row g-3">
+    <div class="col-md-5">
+      <label for="filter-name" class="form-label sr-only">Search by name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="filter-name"
+        [(ngModel)]="filters.name"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search by name..."
+        aria-describedby="filter-hint"
+      />
+    </div>
+    <div class="col-md-5">
+      <label for="filter-employee-number" class="form-label sr-only">Search by employee number</label>
+      <input
+        type="text"
+        class="form-control"
+        id="filter-employee-number"
+        [(ngModel)]="filters.employeeNumber"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search by employee number..."
+        [attr.aria-label]="'Employee number filter'"
+      />
+    </div>
+    <div class="col-md-2">
+      <button
+        class="btn btn-outline-secondary w-100"
+        (click)="clearFilters()"
+        [disabled]="!hasActiveFilters"
+        aria-label="Clear all filters"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
+  <div id="filter-hint" class="sr-only">
+    Use these fields to filter the employees list. Results update automatically as you type.
+  </div>
+</section>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <div role="status" aria-live="polite">
+    <span class="sr-only">Loading employees...</span>
+    <app-table-skeleton [rows]="8" [columns]="5"></app-table-skeleton>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state
+    [message]="error"
+    (retry)="loadEmployees()"
+    [retrying]="isLoading"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && filteredEmployees.length === 0) {
+  <div class="text-center py-5">
+    <div class="mb-3">
+      <span style="font-size: 4rem;">👤</span>
+    </div>
+    <h3>No employees found</h3>
+    <p class="text-muted">
+      @if (hasActiveFilters) {
+        Try adjusting your search criteria or clear the filters.
+      } @else {
+        Get started by adding your first employee.
+      }
+    </p>
+    <div class="d-flex gap-2 justify-content-center">
+      @if (hasActiveFilters) {
+        <button class="btn btn-outline-secondary" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      }
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        + Add Employee
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Data Table -->
+@if (!isLoading && !error && filteredEmployees.length > 0) {
+  <div class="table-responsive" role="region" aria-label="Employees data table">
+    <table class="table table-hover" aria-describedby="table-info">
+      <caption class="sr-only" id="employees-table-caption">
+        List of employees showing ID, name, employee number, monthly consumption, and available actions.
+        Currently showing {{ filteredEmployees.length }} of {{ employees.length }} employees.
+      </caption>
+      <thead class="table-light">
+        <tr>
+          <th
+            scope="col"
+            (click)="sortBy('id')"
+            (keydown.enter)="sortBy('id')"
+            (keydown.space)="sortBy('id'); $event.preventDefault()"
+            class="sortable"
+            tabindex="0"
+            role="columnheader"
+            [attr.aria-sort]="sortField === 'id' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+          >
+            <span class="d-flex align-items-center gap-1">
+              ID
+              <span class="sort-icon" aria-hidden="true">{{ getSortIcon('id') }}</span>
+            </span>
+          </th>
+          <th
+            scope="col"
+            (click)="sortBy('name')"
+            (keydown.enter)="sortBy('name')"
+            (keydown.space)="sortBy('name'); $event.preventDefault()"
+            class="sortable"
+            tabindex="0"
+            role="columnheader"
+            [attr.aria-sort]="sortField === 'name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+          >
+            <span class="d-flex align-items-center gap-1">
+              Name
+              <span class="sort-icon" aria-hidden="true">{{ getSortIcon('name') }}</span>
+            </span>
+          </th>
+          <th
+            scope="col"
+            (click)="sortBy('employee_number')"
+            (keydown.enter)="sortBy('employee_number')"
+            (keydown.space)="sortBy('employee_number'); $event.preventDefault()"
+            class="sortable"
+            tabindex="0"
+            role="columnheader"
+            [attr.aria-sort]="sortField === 'employee_number' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+          >
+            <span class="d-flex align-items-center gap-1">
+              Employee #
+              <span class="sort-icon" aria-hidden="true">{{ getSortIcon('employee_number') }}</span>
+            </span>
+          </th>
+          <th
+            scope="col"
+            (click)="sortBy('monthlyConsumptionValue')"
+            (keydown.enter)="sortBy('monthlyConsumptionValue')"
+            (keydown.space)="sortBy('monthlyConsumptionValue'); $event.preventDefault()"
+            class="sortable"
+            tabindex="0"
+            role="columnheader"
+            [attr.aria-sort]="sortField === 'monthlyConsumptionValue' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+          >
+            <span class="d-flex align-items-center gap-1">
+              Monthly Limit
+              <span class="sort-icon" aria-hidden="true">{{ getSortIcon('monthlyConsumptionValue') }}</span>
+            </span>
+          </th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (employee of filteredEmployees; track trackByEmployeeId($index, employee)) {
+          <tr>
+            <td>{{ employee.id }}</td>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.employee_number }}</td>
+            <td>{{ employee.monthlyConsumptionValue | currency }}</td>
+            <td class="table-actions">
+              <button
+                (click)="openEditModal(employee)"
+                class="btn btn-sm btn-outline-primary"
+                [attr.aria-label]="'Edit ' + employee.name"
+              >Edit</button>
+              <button
+                (click)="deleteEmployee(employee)"
+                class="btn btn-sm btn-outline-danger"
+                [attr.aria-label]="'Delete ' + employee.name"
+              >Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Create/Edit Modal -->
+<app-modal
+  [isOpen]="showModal"
+  [title]="modalTitle"
+  [loading]="isSaving"
+  (close)="closeModal()">
+  <ng-container modal-body>
+    <app-employee-form
+      [employee]="selectedEmployee"
+      [loading]="isSaving"
+      (save)="onSave($event)"
+      (cancel)="closeModal()">
+    </app-employee-form>
+  </ng-container>
+</app-modal>
