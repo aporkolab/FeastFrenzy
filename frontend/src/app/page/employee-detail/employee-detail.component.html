@@ -1,0 +1,88 @@
+<!-- Page Header -->
+<header class="page-header mb-4">
+  <h1>{{ pageTitle }}</h1>
+</header>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <app-form-skeleton></app-form-skeleton>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state
+    [message]="error"
+    (retry)="loadEmployee()"
+    actionText="Go Back"
+    (action)="goBack()"
+  ></app-error-state>
+}
+
+<!-- Create/Edit Form -->
+@if (!error && !isLoading && (mode === 'create' || mode === 'edit')) {
+  <section class="card" aria-labelledby="form-heading">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h2 id="form-heading" class="h4 mb-0">{{ pageTitle }}</h2>
+      @if (employee?.id) {
+        <span class="badge bg-secondary" aria-label="Employee ID">
+          #{{ employee!.id }}
+        </span>
+      }
+    </div>
+    <div class="card-body">
+      <app-employee-form
+        [employee]="employee"
+        [loading]="isSaving"
+        (save)="onSave($event)"
+        (cancel)="onCancel()"
+      ></app-employee-form>
+    </div>
+  </section>
+}
+
+<!-- View Mode (if implemented) -->
+@if (!error && !isLoading && mode === 'view' && employee) {
+  <section class="card" aria-labelledby="details-heading">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h2 id="details-heading" class="h4 mb-0">Employee Details</h2>
+      <span class="badge bg-secondary" aria-label="Employee ID">
+        #{{ employee.id }}
+      </span>
+    </div>
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Name</dt>
+        <dd class="col-sm-8">{{ employee.name }}</dd>
+
+        <dt class="col-sm-4">Employee Number</dt>
+        <dd class="col-sm-8">
+          <code>{{ employee.employee_number }}</code>
+        </dd>
+
+        <dt class="col-sm-4">Monthly Allowance</dt>
+        <dd class="col-sm-8 text-success">
+          {{ employee.monthlyConsumptionValue | currency }}
+        </dd>
+      </dl>
+      
+      <hr>
+      
+      <nav class="d-flex gap-2" aria-label="Employee actions">
+        <button 
+          class="btn btn-outline-secondary" 
+          (click)="goBack()"
+          aria-label="Go back to employees list"
+        >
+          <span aria-hidden="true">←</span> Go Back
+        </button>
+        <a 
+          [routerLink]="['/employees', employee.id]" 
+          class="btn btn-primary"
+          [attr.aria-label]="'Edit employee ' + employee.name"
+        >
+          Edit Employee
+        </a>
+      </nav>
+    </div>
+  </section>
+}
