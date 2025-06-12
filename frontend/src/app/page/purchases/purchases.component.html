@@ -1,0 +1,98 @@
+<!-- Page Header with Add Button -->
+<header class="page-header mb-4 d-flex justify-content-between align-items-center">
+  <h1>Purchases</h1>
+  <button
+    class="btn btn-primary"
+    (click)="navigateToNew()"
+    aria-label="Add a new purchase">
+    + Add Purchase
+  </button>
+</header>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <div role="status" aria-live="polite">
+    <span class="sr-only">Loading purchases...</span>
+    <app-table-skeleton [rows]="8" [columns]="5"></app-table-skeleton>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state
+    [message]="error"
+    (retry)="loadPurchases()"
+    [retrying]="isLoading"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && purchases.length === 0) {
+  <div class="text-center py-5">
+    <div class="mb-3">
+      <span style="font-size: 4rem;">🛒</span>
+    </div>
+    <h3>No purchases found</h3>
+    <p class="text-muted">Get started by adding your first purchase.</p>
+    <button class="btn btn-primary" (click)="navigateToNew()">
+      + Add Purchase
+    </button>
+  </div>
+}
+
+<!-- Data Table -->
+@if (!isLoading && !error && purchases.length > 0) {
+  <div class="table-responsive" role="region" aria-label="Purchases data table">
+    <table class="table table-hover">
+      <caption class="sr-only">
+        List of purchases showing employee, total amount, date, status, and available actions.
+        Currently showing {{ purchases.length }} purchases.
+      </caption>
+      <thead class="table-light">
+        <tr>
+          <th scope="col">Employee</th>
+          <th scope="col">Total</th>
+          <th scope="col">Date</th>
+          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (purchase of purchases; track purchase.id) {
+          <tr>
+            <td>{{ purchase.employee?.name || 'Employee #' + purchase.employeeId }}</td>
+            <td>{{ purchase.total | currency }}</td>
+            <td>{{ purchase.date | date:'short' }}</td>
+            <td>
+              <span
+                class="badge"
+                [class.bg-success]="purchase.closed"
+                [class.bg-warning]="!purchase.closed"
+                [attr.aria-label]="'Status: ' + (purchase.closed ? 'Closed' : 'Open')"
+              >
+                {{ purchase.closed ? 'Closed' : 'Open' }}
+              </span>
+            </td>
+            <td class="table-actions">
+              <button
+                (click)="viewPurchase(purchase)"
+                class="btn btn-sm btn-outline-info"
+                [attr.aria-label]="'View purchase #' + purchase.id"
+              >View</button>
+              <button
+                (click)="editPurchase(purchase)"
+                class="btn btn-sm btn-outline-primary"
+                [attr.aria-label]="'Edit purchase #' + purchase.id"
+              >Edit</button>
+              <button
+                (click)="deletePurchase(purchase)"
+                class="btn btn-sm btn-outline-danger"
+                [attr.aria-label]="'Delete purchase #' + purchase.id"
+              >Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
