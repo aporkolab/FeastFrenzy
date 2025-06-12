@@ -1,0 +1,141 @@
+<!-- Page Header -->
+<header class="d-flex justify-content-between align-items-center mb-4 page-header">
+  <h1>Purchase Report</h1>
+  <a 
+    routerLink="/dashboard" 
+    class="btn btn-outline-secondary"
+    aria-label="Go back to dashboard"
+  >
+    <span aria-hidden="true">←</span> Back to Dashboard
+  </a>
+</header>
+
+<!-- Filter Form -->
+<section class="card mb-4" aria-labelledby="filter-heading">
+  <div class="card-body">
+    <h2 id="filter-heading" class="sr-only">Report Filters</h2>
+    <form class="row g-3 align-items-end" role="search" aria-label="Filter purchase report">
+      <div class="col-md-4">
+        <label class="form-label" for="monthSelect">Select Month</label>
+        <select 
+          class="form-select" 
+          id="monthSelect" 
+          [(ngModel)]="selectedMonth" 
+          name="month"
+          aria-required="true"
+          aria-describedby="month-help"
+        >
+          <option value="">-- Select Month --</option>
+          <option value="january">January</option>
+          <option value="february">February</option>
+          <option value="march">March</option>
+          <option value="april">April</option>
+          <option value="may">May</option>
+          <option value="june">June</option>
+          <option value="july">July</option>
+          <option value="august">August</option>
+          <option value="september">September</option>
+          <option value="october">October</option>
+          <option value="november">November</option>
+          <option value="december">December</option>
+        </select>
+        <span id="month-help" class="sr-only">Choose a month to view purchase data</span>
+      </div>
+      <div class="col-md-2">
+        <button 
+          class="btn btn-primary w-100" 
+          (click)="getPurchaseReport()"
+          [disabled]="isLoading"
+          [attr.aria-busy]="isLoading"
+          aria-label="Generate purchase report"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            <span class="sr-only">Loading report...</span>
+          }
+          Get Report
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <div role="status" aria-live="polite">
+    <span class="sr-only">Loading purchase report...</span>
+    <app-table-skeleton [rows]="8" [columns]="5"></app-table-skeleton>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="getPurchaseReport()"
+  ></app-error-state>
+}
+
+<!-- Empty State (after search) -->
+@if (!isLoading && !error && hasSearched && purchases.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No purchases found"
+    message="No purchases were made during the selected month."
+    [showRetry]="false"
+  ></app-error-state>
+}
+
+<!-- Results Table -->
+@if (!isLoading && !error && purchases.length > 0) {
+  <section class="card" aria-labelledby="results-heading">
+    <div class="card-header">
+      <h2 id="results-heading" class="h5 mb-0">Purchase Report - {{ selectedMonth | titlecase }}</h2>
+    </div>
+    <div class="table-responsive" role="region" aria-label="Purchase data">
+      <table class="table table-hover mb-0">
+        <caption class="sr-only">
+          Purchase report for {{ selectedMonth | titlecase }}. 
+          Showing {{ purchases.length }} purchases.
+        </caption>
+        <thead class="table-light">
+          <tr>
+            <th scope="col">Purchase ID</th>
+            <th scope="col">Employee</th>
+            <th scope="col">Date</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="text-end">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (purchase of purchases; track purchase.id) {
+            <tr>
+              <td>{{ purchase.id }}</td>
+              <td>{{ purchase.employee?.name || 'Employee #' + purchase.employeeId }}</td>
+              <td>{{ purchase.date | date:'mediumDate' }}</td>
+              <td>
+                <span 
+                  class="badge"
+                  [class.bg-success]="purchase.closed"
+                  [class.bg-warning]="!purchase.closed"
+                  [attr.aria-label]="'Status: ' + (purchase.closed ? 'Closed' : 'Open')"
+                >
+                  {{ purchase.closed ? 'Closed' : 'Open' }}
+                </span>
+              </td>
+              <td class="text-end fw-bold">{{ purchase.total | currency }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
+<!-- Initial State (before search) -->
+@if (!isLoading && !error && !hasSearched) {
+  <div class="text-center text-muted p-5" role="status">
+    <div class="fs-1 mb-3" aria-hidden="true">🛒</div>
+    <p>Select a month and click "Get Report" to view purchase data.</p>
+  </div>
+}
