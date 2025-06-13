@@ -1,0 +1,81 @@
+<div class="container py-4">
+  <header class="mb-4">
+    <h1>Admin Panel</h1>
+  </header>
+
+  <!-- Sales Table -->
+  <section aria-labelledby="sales-heading" class="mb-5">
+    <h2 id="sales-heading" class="h4 mb-3">Sales Overview</h2>
+    <div class="table-responsive" role="region" aria-label="Sales data">
+      <table class="table table-striped">
+        <caption class="sr-only">List of all sales transactions</caption>
+        <thead>
+          <tr>
+            <th scope="col">Dolgozó</th>
+            <th scope="col">Termék</th>
+            <th scope="col">Mennyiség</th>
+            <th scope="col">Ár</th>
+            <th scope="col">Dátum</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sale of sales">
+            <td>{{ sale.employee }}</td>
+            <td>{{ sale.product }}</td>
+            <td>{{ sale.quantity }}</td>
+            <td>{{ sale.price }}</td>
+            <td>{{ sale.date }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Price Update Form -->
+  <section aria-labelledby="prices-heading">
+    <h2 id="prices-heading" class="h4 mb-3">Update Prices</h2>
+    <form (ngSubmit)="updatePrices()" aria-label="Price update form" class="card p-3">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="coffee-price" class="form-label">Kávé ára:</label>
+          <input 
+            type="number" 
+            id="coffee-price"
+            class="form-control"
+            [(ngModel)]="newPrices.coffee" 
+            name="coffee"
+            aria-describedby="coffee-help"
+          >
+          <small id="coffee-help" class="text-muted">Price in HUF</small>
+        </div>
+        <div class="col-md-4">
+          <label for="soda-price" class="form-label">Üdítő ára:</label>
+          <input 
+            type="number" 
+            id="soda-price"
+            class="form-control"
+            [(ngModel)]="newPrices.soda" 
+            name="soda"
+            aria-describedby="soda-help"
+          >
+          <small id="soda-help" class="text-muted">Price in HUF</small>
+        </div>
+        <div class="col-md-4">
+          <label for="menu-price" class="form-label">Menü ára:</label>
+          <input 
+            type="number" 
+            id="menu-price"
+            class="form-control"
+            [(ngModel)]="newPrices.menu" 
+            name="menu"
+            aria-describedby="menu-help"
+          >
+          <small id="menu-help" class="text-muted">Price in HUF</small>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Árak frissítése</button>
+      </div>
+    </form>
+  </section>
+</div>
