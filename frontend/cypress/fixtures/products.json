@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Gulyásleves",
+    "price": 890,
+    "category": "Levesek"
+  },
+  {
+    "name": "Rántott csirkemell",
+    "price": 1590,
+    "category": "Főételek"
+  },
+  {
+    "name": "Bécsi szelet",
+    "price": 1890,
+    "category": "Főételek"
+  },
+  {
+    "name": "Kávé",
+    "price": 350,
+    "category": "Italok"
+  },
+  {
+    "name": "Somlói galuska",
+    "price": 890,
+    "category": "Desszertek"
+  },
+  {
+    "name": "Ásványvíz 0.5l",
+    "price": 290,
+    "category": "Italok"
+  }
+]

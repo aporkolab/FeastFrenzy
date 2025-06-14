@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Kovács Péter",
+    "employee_number": "EMP001",
+    "monthlyConsumptionValue": 25000
+  },
+  {
+    "name": "Nagy Erzsébet",
+    "employee_number": "EMP002",
+    "monthlyConsumptionValue": 20000
+  },
+  {
+    "name": "Szabó András",
+    "employee_number": "EMP003",
+    "monthlyConsumptionValue": 30000
+  },
+  {
+    "name": "Tóth Katalin",
+    "employee_number": "EMP004",
+    "monthlyConsumptionValue": 22000
+  }
+]

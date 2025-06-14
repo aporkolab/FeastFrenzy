@@ -1,0 +1,29 @@
+{
+  "admin": {
+    "email": "admin@kantinrendszer.hu",
+    "password": "Admin123!",
+    "name": "Rendszergazda",
+    "role": "admin"
+  },
+  "manager": {
+    "email": "vezerigazgato@cegem.hu",
+    "password": "Manager123!",
+    "name": "Dr. Szabó József",
+    "role": "manager"
+  },
+  "employee": {
+    "email": "kovacs.peter@cegem.hu",
+    "password": "Employee123!",
+    "name": "Kovács Péter",
+    "role": "employee"
+  },
+  "newUser": {
+    "email": "uj.felhasznalo@test.hu",
+    "password": "NewUser123!",
+    "name": "Új Teszt Felhasználó"
+  },
+  "invalidUser": {
+    "email": "rossz@test.hu",
+    "password": "RosszJelszo123!"
+  }
+}
