@@ -1,0 +1,72 @@
+# FeastFrenzy Production Docker Compose
+# Domain: feastfrenzy.dev
+#
+# Uses host MySQL and Redis (already running on server)
+# Containerizes both frontend (nginx) and backend (Node.js)
+#
+# Usage:
+#   docker compose -f docker-compose.server.yml up -d
+#   docker compose -f docker-compose.server.yml down
+#   docker compose -f docker-compose.server.yml logs -f
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - API_URL=https://feastfrenzy.dev/api/v1
+    container_name: feastfrenzy-frontend
+    restart: unless-stopped
+    ports:
+      - "4280:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: feastfrenzy-backend
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      # Database - localhost because network_mode: host
+      - DB_HOST=127.0.0.1
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-feastfrenzy_prod}
+      - DB_USER=${DB_USER:-feastfrenzy}
+      - DB_PASSWORD=${DB_PASSWORD}
+      # Redis - localhost because network_mode: host
+      - REDIS_HOST=127.0.0.1
+      - REDIS_PORT=6379
+      - CACHE_ENABLED=true
+      # JWT
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      # CORS
+      - FRONTEND_URL=https://feastfrenzy.dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
