@@ -1,0 +1,144 @@
+# =====================================================
+# FeastFrenzy - Docker Compose (Conflict-Free Ports)
+# =====================================================
+# Usage: ./ff.sh start
+# =====================================================
+
+services:
+  # ===========================================
+  # MySQL Database (internal only)
+  # ===========================================
+  db:
+    image: mysql:8.0
+    container_name: feastfrenzy-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-feastfrenzy}
+      MYSQL_USER: ${DB_USER:-feastfrenzy}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-feastfrenzy123}
+    # No external port - only accessible within docker network
+    expose:
+      - "3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./table_scripts.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - feastfrenzy-network
+
+  # ===========================================
+  # Redis Cache (internal only)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: feastfrenzy-redis
+    restart: unless-stopped
+    # No external port - only accessible within docker network
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - feastfrenzy-network
+
+  # ===========================================
+  # Backend API (port 4000)
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: feastfrenzy-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3000
+      # Database (internal docker network)
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-feastfrenzy}
+      DB_USER: ${DB_USER:-feastfrenzy}
+      DB_PASSWORD: ${DB_PASSWORD:-feastfrenzy123}
+      # Redis (internal docker network)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_ENABLED: "true"
+      CACHE_DEFAULT_TTL: ${CACHE_DEFAULT_TTL:-300}
+      CACHE_KEY_PREFIX: feastfrenzy_dev
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-token-key-min-32-chars}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      # Development
+      LOG_LEVEL: debug
+      ENABLE_SWAGGER: "true"
+      CORS_ORIGIN: http://localhost:4200
+    ports:
+      - "4000:3000"
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - feastfrenzy-network
+
+  # ===========================================
+  # Frontend App (port 4200)
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: feastfrenzy-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - feastfrenzy-network
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  feastfrenzy-network:
+    driver: bridge
