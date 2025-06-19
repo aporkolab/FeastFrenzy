@@ -1,0 +1,491 @@
+# =====================================================
+# FeastFrenzy Helm Chart Values
+# =====================================================
+# Default configuration values for FeastFrenzy deployment
+# Override these values in your environment-specific files
+# =====================================================
+
+# -----------------------------------------------------
+# Global Settings
+# -----------------------------------------------------
+global:
+  # Image pull secrets for private registries
+  imagePullSecrets: []
+  # Storage class for persistent volumes
+  storageClass: ""
+  # Environment name (dev, staging, production)
+  environment: production
+
+# -----------------------------------------------------
+# Backend Configuration
+# -----------------------------------------------------
+backend:
+  enabled: true
+  
+  # Replica count
+  replicaCount: 2
+  
+  # Container image
+  image:
+    repository: ghcr.io/aporkolab/feastfrenzy/backend
+    tag: ""  # Defaults to Chart appVersion
+    pullPolicy: IfNotPresent
+  
+  # Service account
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+  
+  # Pod annotations
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+    prometheus.io/path: "/metrics"
+  
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+  
+  # Container security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 3000
+    annotations: {}
+  
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  # Pod Disruption Budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    # maxUnavailable: 1
+  
+  # Node selector
+  nodeSelector: {}
+  
+  # Tolerations
+  tolerations: []
+  
+  # Affinity rules
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: backend
+            topologyKey: kubernetes.io/hostname
+  
+  # Liveness probe
+  livenessProbe:
+    httpGet:
+      path: /health/liveness
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  # Readiness probe
+  readinessProbe:
+    httpGet:
+      path: /health/readiness
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # Startup probe (for slow starting containers)
+  startupProbe:
+    httpGet:
+      path: /health/liveness
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+  
+  # Environment variables
+  env:
+    NODE_ENV: production
+    PORT: "3000"
+    LOG_LEVEL: info
+    ENABLE_SWAGGER: "false"
+    ENABLE_RATE_LIMITING: "true"
+    ENABLE_HELMET: "true"
+    SHUTDOWN_TIMEOUT: "30000"
+  
+  # Extra environment variables from ConfigMap/Secret
+  envFrom: []
+  
+  # Extra volumes
+  extraVolumes:
+    - name: tmp
+      emptyDir: {}
+    - name: logs
+      emptyDir: {}
+  
+  # Extra volume mounts
+  extraVolumeMounts:
+    - name: tmp
+      mountPath: /tmp
+    - name: logs
+      mountPath: /app/logs
+
+# -----------------------------------------------------
+# Frontend Configuration
+# -----------------------------------------------------
+frontend:
+  enabled: true
+  
+  replicaCount: 2
+  
+  image:
+    repository: ghcr.io/aporkolab/feastfrenzy/frontend
+    tag: ""
+    pullPolicy: IfNotPresent
+  
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+  
+  podAnnotations: {}
+  
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 101  # nginx user
+    runAsGroup: 101
+    fsGroup: 101
+  
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  
+  service:
+    type: ClusterIP
+    port: 80
+    annotations: {}
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  
+  nodeSelector: {}
+  tolerations: []
+  
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: frontend
+            topologyKey: kubernetes.io/hostname
+  
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # Extra volumes for nginx
+  extraVolumes:
+    - name: nginx-cache
+      emptyDir: {}
+    - name: nginx-run
+      emptyDir: {}
+  
+  extraVolumeMounts:
+    - name: nginx-cache
+      mountPath: /var/cache/nginx
+    - name: nginx-run
+      mountPath: /var/run
+
+# -----------------------------------------------------
+# Ingress Configuration
+# -----------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-connections: "5"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  
+  hosts:
+    - host: feastfrenzy.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  
+  tls:
+    - secretName: feastfrenzy-tls
+      hosts:
+        - feastfrenzy.example.com
+
+# -----------------------------------------------------
+# MySQL Configuration (Bitnami subchart)
+# -----------------------------------------------------
+mysql:
+  enabled: true
+  
+  auth:
+    rootPassword: ""  # Set via --set or secrets
+    database: feastfrenzy
+    username: feastfrenzy
+    password: ""  # Set via --set or secrets
+    existingSecret: ""
+  
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+    
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    
+    configuration: |
+      [mysqld]
+      default_authentication_plugin=mysql_native_password
+      character-set-server=utf8mb4
+      collation-server=utf8mb4_unicode_ci
+      max_connections=200
+      innodb_buffer_pool_size=256M
+  
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# -----------------------------------------------------
+# Redis Configuration (Bitnami subchart)
+# -----------------------------------------------------
+redis:
+  enabled: true
+  
+  architecture: standalone
+  
+  auth:
+    enabled: true
+    password: ""  # Set via --set or secrets
+    existingSecret: ""
+  
+  master:
+    persistence:
+      enabled: true
+      size: 2Gi
+    
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+  
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# -----------------------------------------------------
+# External Database (if mysql.enabled=false)
+# -----------------------------------------------------
+externalDatabase:
+  host: ""
+  port: 3306
+  database: feastfrenzy
+  username: feastfrenzy
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: db-password
+
+# -----------------------------------------------------
+# External Redis (if redis.enabled=false)
+# -----------------------------------------------------
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: redis-password
+
+# -----------------------------------------------------
+# Secrets Configuration
+# -----------------------------------------------------
+secrets:
+  # JWT secrets
+  jwt:
+    secret: ""  # REQUIRED: Set via --set or external secret
+    refreshSecret: ""  # REQUIRED: Set via --set or external secret
+    existingSecret: ""
+  
+  # Database credentials (if not using subchart)
+  database:
+    existingSecret: ""
+  
+  # Redis password (if not using subchart)
+  redis:
+    existingSecret: ""
+
+# -----------------------------------------------------
+# ConfigMap Configuration
+# -----------------------------------------------------
+config:
+  # CORS settings
+  corsOrigin: "https://feastfrenzy.example.com"
+  
+  # JWT expiration
+  jwtExpiresIn: "15m"
+  jwtRefreshExpiresIn: "7d"
+  
+  # Rate limiting
+  rateLimitWindowMs: "900000"
+  rateLimitMaxRequests: "100"
+  
+  # Cache settings
+  cacheEnabled: "true"
+  cacheDefaultTtl: "300"
+  cacheKeyPrefix: "feastfrenzy_prod"
+
+# -----------------------------------------------------
+# Network Policies
+# -----------------------------------------------------
+networkPolicy:
+  enabled: true
+  
+  # Allow ingress from ingress controller
+  ingress:
+    enabled: true
+    namespaceSelector:
+      matchLabels:
+        name: ingress-nginx
+  
+  # Allow egress to database and redis
+  egress:
+    enabled: true
+
+# -----------------------------------------------------
+# Service Monitor (Prometheus)
+# -----------------------------------------------------
+serviceMonitor:
+  enabled: true
+  namespace: ""
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}
+
+# -----------------------------------------------------
+# Pod Topology Spread Constraints
+# -----------------------------------------------------
+topologySpreadConstraints:
+  enabled: true
+  maxSkew: 1
+  topologyKey: topology.kubernetes.io/zone
+  whenUnsatisfiable: ScheduleAnyway
+
+# -----------------------------------------------------
+# Init Containers (for migrations)
+# -----------------------------------------------------
+initContainers:
+  migrations:
+    enabled: true
+    image:
+      repository: ghcr.io/aporkolab/feastfrenzy/backend
+      tag: ""
+      pullPolicy: IfNotPresent
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "Running database migrations..."
+        npm run migrate
+        echo "Migrations completed!"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
