@@ -1,0 +1,163 @@
+# =====================================================
+# FeastFrenzy - Development Values
+# =====================================================
+# Usage: helm install feastfrenzy ./helm/feastfrenzy -f ./helm/feastfrenzy/values-dev.yaml
+# =====================================================
+
+global:
+  environment: development
+
+# -----------------------------------------------------
+# Backend - Development Settings
+# -----------------------------------------------------
+backend:
+  replicaCount: 1
+  
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  
+  autoscaling:
+    enabled: false
+  
+  podDisruptionBudget:
+    enabled: false
+  
+  env:
+    NODE_ENV: development
+    LOG_LEVEL: debug
+    ENABLE_SWAGGER: "true"
+    ENABLE_RATE_LIMITING: "false"
+
+# -----------------------------------------------------
+# Frontend - Development Settings
+# -----------------------------------------------------
+frontend:
+  replicaCount: 1
+  
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+  
+  autoscaling:
+    enabled: false
+  
+  podDisruptionBudget:
+    enabled: false
+
+# -----------------------------------------------------
+# Ingress - Development Settings
+# -----------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  
+  hosts:
+    - host: feastfrenzy.local
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  
+  tls: []
+
+# -----------------------------------------------------
+# MySQL - Development Settings
+# -----------------------------------------------------
+mysql:
+  enabled: true
+  
+  auth:
+    rootPassword: "devpassword"
+    database: feastfrenzy_dev
+    username: feastfrenzy_dev
+    password: "devpassword"
+  
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi
+    
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+# -----------------------------------------------------
+# Redis - Development Settings
+# -----------------------------------------------------
+redis:
+  enabled: true
+  
+  architecture: standalone
+  
+  auth:
+    enabled: true
+    password: "devpassword"
+  
+  master:
+    persistence:
+      enabled: true
+      size: 500Mi
+    
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 25m
+        memory: 64Mi
+
+# -----------------------------------------------------
+# Configuration - Development Settings
+# -----------------------------------------------------
+config:
+  corsOrigin: "http://feastfrenzy.local"
+  jwtExpiresIn: "1h"
+  jwtRefreshExpiresIn: "7d"
+  rateLimitWindowMs: "60000"
+  rateLimitMaxRequests: "1000"
+  cacheEnabled: "true"
+  cacheDefaultTtl: "60"
+  cacheKeyPrefix: "feastfrenzy_dev"
+
+# -----------------------------------------------------
+# Secrets - Development Settings
+# -----------------------------------------------------
+secrets:
+  jwt:
+    secret: "dev-jwt-secret-not-for-production-use-only"
+    refreshSecret: "dev-refresh-secret-not-for-production-use-only"
+
+# -----------------------------------------------------
+# Disable Production Features
+# -----------------------------------------------------
+networkPolicy:
+  enabled: false
+
+serviceMonitor:
+  enabled: false
+
+topologySpreadConstraints:
+  enabled: false
+
+initContainers:
+  migrations:
+    enabled: true
