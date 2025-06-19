@@ -1,0 +1,205 @@
+# =====================================================
+# FeastFrenzy - Production Values
+# =====================================================
+# Usage: helm install feastfrenzy ./helm/feastfrenzy -f ./helm/feastfrenzy/values-production.yaml
+# =====================================================
+
+global:
+  environment: production
+
+# -----------------------------------------------------
+# Backend - Production Settings
+# -----------------------------------------------------
+backend:
+  replicaCount: 3
+  
+  image:
+    repository: ghcr.io/aporkolab/feastfrenzy/backend
+    pullPolicy: Always
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
+  
+  env:
+    NODE_ENV: production
+    LOG_LEVEL: warn
+    ENABLE_SWAGGER: "false"
+    ENABLE_RATE_LIMITING: "true"
+    ENABLE_HELMET: "true"
+
+# -----------------------------------------------------
+# Frontend - Production Settings
+# -----------------------------------------------------
+frontend:
+  replicaCount: 3
+  
+  image:
+    repository: ghcr.io/aporkolab/feastfrenzy/frontend
+    pullPolicy: Always
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+
+# -----------------------------------------------------
+# Ingress - Production Settings
+# -----------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-connections: "10"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  
+  hosts:
+    - host: feastfrenzy.yourdomain.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  
+  tls:
+    - secretName: feastfrenzy-tls-prod
+      hosts:
+        - feastfrenzy.yourdomain.com
+
+# -----------------------------------------------------
+# MySQL - Production Settings
+# -----------------------------------------------------
+mysql:
+  enabled: true
+  
+  auth:
+    # Use existingSecret in real production!
+    existingSecret: "feastfrenzy-mysql-secret"
+    database: feastfrenzy_prod
+    username: feastfrenzy_prod
+  
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: "gp3"  # AWS EBS gp3
+    
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 500m
+        memory: 2Gi
+    
+    configuration: |
+      [mysqld]
+      default_authentication_plugin=mysql_native_password
+      character-set-server=utf8mb4
+      collation-server=utf8mb4_unicode_ci
+      max_connections=500
+      innodb_buffer_pool_size=2G
+      innodb_log_file_size=256M
+      slow_query_log=1
+      long_query_time=2
+
+# -----------------------------------------------------
+# Redis - Production Settings
+# -----------------------------------------------------
+redis:
+  enabled: true
+  
+  architecture: replication
+  
+  auth:
+    # Use existingSecret in real production!
+    existingSecret: "feastfrenzy-redis-secret"
+  
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: "gp3"
+    
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 8Gi
+
+# -----------------------------------------------------
+# Configuration - Production Settings
+# -----------------------------------------------------
+config:
+  corsOrigin: "https://feastfrenzy.yourdomain.com"
+  jwtExpiresIn: "15m"
+  jwtRefreshExpiresIn: "7d"
+  rateLimitWindowMs: "900000"
+  rateLimitMaxRequests: "50"
+  cacheEnabled: "true"
+  cacheDefaultTtl: "600"
+  cacheKeyPrefix: "feastfrenzy_prod"
+
+# -----------------------------------------------------
+# Secrets - Production Settings
+# -----------------------------------------------------
+secrets:
+  jwt:
+    # ALWAYS use existingSecret in production!
+    existingSecret: "feastfrenzy-jwt-secret"
+
+# -----------------------------------------------------
+# Network Policy - Enabled
+# -----------------------------------------------------
+networkPolicy:
+  enabled: true
+
+# -----------------------------------------------------
+# Service Monitor - Enabled
+# -----------------------------------------------------
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 10s
+
+# -----------------------------------------------------
+# Topology Spread - Multi-AZ
+# -----------------------------------------------------
+topologySpreadConstraints:
+  enabled: true
+  maxSkew: 1
+  topologyKey: topology.kubernetes.io/zone
+  whenUnsatisfiable: DoNotSchedule
