@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "feastfrenzy.fullname" . }}-config
+  labels:
+    {{- include "feastfrenzy.labels" . | nindent 4 }}
+data:
+  # CORS settings
+  CORS_ORIGIN: {{ .Values.config.corsOrigin | quote }}
+  
+  # JWT settings
+  JWT_EXPIRES_IN: {{ .Values.config.jwtExpiresIn | quote }}
+  JWT_REFRESH_EXPIRES_IN: {{ .Values.config.jwtRefreshExpiresIn | quote }}
+  
+  # Rate limiting
+  RATE_LIMIT_WINDOW_MS: {{ .Values.config.rateLimitWindowMs | quote }}
+  RATE_LIMIT_MAX_REQUESTS: {{ .Values.config.rateLimitMaxRequests | quote }}
+  
+  # Cache settings
+  CACHE_ENABLED: {{ .Values.config.cacheEnabled | quote }}
+  CACHE_DEFAULT_TTL: {{ .Values.config.cacheDefaultTtl | quote }}
+  CACHE_KEY_PREFIX: {{ .Values.config.cacheKeyPrefix | quote }}
