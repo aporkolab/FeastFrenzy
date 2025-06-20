@@ -1,0 +1,196 @@
+{{- if .Values.backend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "feastfrenzy.fullname" . }}-backend
+  labels:
+    {{- include "feastfrenzy.backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "feastfrenzy.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- with .Values.backend.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "feastfrenzy.backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "feastfrenzy.backend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
+      {{- if .Values.initContainers.migrations.enabled }}
+      initContainers:
+        - name: migrations
+          image: {{ include "feastfrenzy.backend.image" . }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          {{- with .Values.initContainers.migrations.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            {{- include "feastfrenzy.backend.env" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.initContainers.migrations.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.backend.securityContext | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: backend
+          securityContext:
+            {{- toYaml .Values.backend.securityContext | nindent 12 }}
+          image: {{ include "feastfrenzy.backend.image" . }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            {{- include "feastfrenzy.backend.env" . | nindent 12 }}
+          {{- with .Values.backend.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.backend.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.backend.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.backend.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          volumeMounts:
+            {{- with .Values.backend.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- with .Values.backend.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.backend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints.enabled }}
+      topologySpreadConstraints:
+        - maxSkew: {{ .Values.topologySpreadConstraints.maxSkew }}
+          topologyKey: {{ .Values.topologySpreadConstraints.topologyKey }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "feastfrenzy.backend.selectorLabels" . | nindent 14 }}
+      {{- end }}
+{{- end }}
+
+{{/*
+Backend environment variables
+*/}}
+{{- define "feastfrenzy.backend.env" -}}
+{{- range $key, $value := .Values.backend.env }}
+- name: {{ $key }}
+  value: {{ $value | quote }}
+{{- end }}
+# Database configuration
+- name: DB_HOST
+  value: {{ include "feastfrenzy.mysql.host" . | quote }}
+- name: DB_PORT
+  value: {{ include "feastfrenzy.mysql.port" . | quote }}
+- name: DB_NAME
+  value: {{ include "feastfrenzy.mysql.database" . | quote }}
+- name: DB_USER
+  value: {{ include "feastfrenzy.mysql.username" . | quote }}
+- name: DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "feastfrenzy.mysql.secretName" . }}
+      key: {{ if .Values.mysql.enabled }}mysql-password{{ else }}{{ .Values.externalDatabase.existingSecretPasswordKey | default "db-password" }}{{ end }}
+# Redis configuration
+- name: REDIS_HOST
+  value: {{ include "feastfrenzy.redis.host" . | quote }}
+- name: REDIS_PORT
+  value: {{ include "feastfrenzy.redis.port" . | quote }}
+- name: REDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "feastfrenzy.redis.secretName" . }}
+      key: {{ if .Values.redis.enabled }}redis-password{{ else }}{{ .Values.externalRedis.existingSecretPasswordKey | default "redis-password" }}{{ end }}
+# JWT configuration
+- name: JWT_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "feastfrenzy.jwt.secretName" . }}
+      key: jwt-secret
+- name: JWT_REFRESH_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "feastfrenzy.jwt.secretName" . }}
+      key: jwt-refresh-secret
+- name: JWT_EXPIRES_IN
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: JWT_EXPIRES_IN
+- name: JWT_REFRESH_EXPIRES_IN
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: JWT_REFRESH_EXPIRES_IN
+# CORS
+- name: CORS_ORIGIN
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: CORS_ORIGIN
+# Cache settings
+- name: CACHE_ENABLED
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: CACHE_ENABLED
+- name: CACHE_DEFAULT_TTL
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: CACHE_DEFAULT_TTL
+- name: CACHE_KEY_PREFIX
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: CACHE_KEY_PREFIX
+# Rate limiting
+- name: RATE_LIMIT_WINDOW_MS
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: RATE_LIMIT_WINDOW_MS
+- name: RATE_LIMIT_MAX_REQUESTS
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "feastfrenzy.fullname" . }}-config
+      key: RATE_LIMIT_MAX_REQUESTS
+{{- end }}
