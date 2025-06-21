@@ -1,0 +1,38 @@
+{{- if and .Values.backend.enabled .Values.backend.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "feastfrenzy.fullname" . }}-backend
+  labels:
+    {{- include "feastfrenzy.backend.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.backend.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.backend.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.backend.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.backend.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "feastfrenzy.backend.selectorLabels" . | nindent 6 }}
+{{- end }}
+
+{{- if and .Values.frontend.enabled .Values.frontend.podDisruptionBudget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "feastfrenzy.fullname" . }}-frontend
+  labels:
+    {{- include "feastfrenzy.frontend.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.frontend.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.frontend.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.frontend.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.frontend.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "feastfrenzy.frontend.selectorLabels" . | nindent 6 }}
+{{- end }}
