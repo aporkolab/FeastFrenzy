@@ -1,0 +1,88 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║   🍽️  FeastFrenzy has been deployed!                                  ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+{{- if .Values.ingress.enabled }}
+🌐 Access your application:
+{{- range $host := .Values.ingress.hosts }}
+{{- range .paths }}
+   {{ if $.Values.ingress.tls }}https{{ else }}http{{ end }}://{{ $host.host }}{{ .path }}
+{{- end }}
+{{- end }}
+{{- else }}
+
+📡 Port-forward to access the application:
+
+   # Frontend
+   kubectl port-forward svc/{{ include "feastfrenzy.fullname" . }}-frontend {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }} -n {{ .Release.Namespace }}
+
+   # Backend API
+   kubectl port-forward svc/{{ include "feastfrenzy.fullname" . }}-backend {{ .Values.backend.service.port }}:{{ .Values.backend.service.port }} -n {{ .Release.Namespace }}
+
+   Then access:
+   - Frontend: http://localhost:{{ .Values.frontend.service.port }}
+   - Backend:  http://localhost:{{ .Values.backend.service.port }}
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Check deployment status:
+
+   kubectl get pods -l "app.kubernetes.io/instance={{ .Release.Name }}" -n {{ .Release.Namespace }}
+
+📈 View logs:
+
+   # Backend logs
+   kubectl logs -l "app.kubernetes.io/component=backend,app.kubernetes.io/instance={{ .Release.Name }}" -n {{ .Release.Namespace }} -f
+
+   # Frontend logs
+   kubectl logs -l "app.kubernetes.io/component=frontend,app.kubernetes.io/instance={{ .Release.Name }}" -n {{ .Release.Namespace }} -f
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{- if .Values.mysql.enabled }}
+🗄️  MySQL Database:
+
+   Host: {{ include "feastfrenzy.mysql.host" . }}
+   Port: 3306
+   Database: {{ .Values.mysql.auth.database }}
+   User: {{ .Values.mysql.auth.username }}
+
+   # Connect to MySQL
+   kubectl exec -it $(kubectl get pods -l "app.kubernetes.io/name=mysql" -o jsonpath='{.items[0].metadata.name}' -n {{ .Release.Namespace }}) -n {{ .Release.Namespace }} -- mysql -u {{ .Values.mysql.auth.username }} -p{{ .Values.mysql.auth.database }}
+{{- end }}
+
+{{- if .Values.redis.enabled }}
+📦 Redis Cache:
+
+   Host: {{ include "feastfrenzy.redis.host" . }}
+   Port: 6379
+
+   # Connect to Redis
+   kubectl exec -it $(kubectl get pods -l "app.kubernetes.io/name=redis" -o jsonpath='{.items[0].metadata.name}' -n {{ .Release.Namespace }}) -n {{ .Release.Namespace }} -- redis-cli -a $REDIS_PASSWORD
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  Important Notes:
+
+{{- if not .Values.secrets.jwt.existingSecret }}
+   • JWT secrets were auto-generated. For production, use --set or existingSecret.
+{{- end }}
+
+{{- if and .Values.mysql.enabled (not .Values.mysql.auth.existingSecret) }}
+   • MySQL passwords were set via values. For production, use existingSecret.
+{{- end }}
+
+{{- if and .Values.redis.enabled (not .Values.redis.auth.existingSecret) }}
+   • Redis password was set via values. For production, use existingSecret.
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 Documentation: https://github.com/APorkolab/FeastFrenzy
+🐛 Issues: https://github.com/APorkolab/FeastFrenzy/issues
+
+Thank you for using FeastFrenzy! 🎉
