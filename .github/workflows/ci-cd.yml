@@ -1,0 +1,388 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '22'
+  BACKEND_DIR: './backend'
+  FRONTEND_DIR: './frontend'
+
+jobs:
+  # Code Quality & Security Checks
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality & Security
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Debug - List directory structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Checking for frontend directory:"
+          ls -la frontend/ || echo "Frontend directory not found"
+          echo "Checking for backend directory:"
+          ls -la backend/ || echo "Backend directory not found"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: cd ${{ env.BACKEND_DIR }} && npm ci
+        
+      - name: Install frontend dependencies
+        run: |
+          if [ -d "${{ env.FRONTEND_DIR }}" ] && [ -f "${{ env.FRONTEND_DIR }}/package.json" ]; then
+            echo "Installing frontend dependencies..."
+            cd ${{ env.FRONTEND_DIR }} && npm ci --legacy-peer-deps
+          else
+            echo "Frontend directory or package.json not found, skipping frontend dependency installation"
+          fi
+
+      - name: Run ESLint (Backend)
+        run: |
+          echo "Running backend linting..."
+          cd ${{ env.BACKEND_DIR }} && npm run lint || {
+            echo "Backend linting found issues. This will not fail the build but should be addressed."
+            exit 0
+          }
+        continue-on-error: true
+
+      - name: Run ESLint (Frontend)
+        run: |
+          if [ -d "${{ env.FRONTEND_DIR }}" ] && [ -f "${{ env.FRONTEND_DIR }}/package.json" ]; then
+            echo "Running frontend linting..."
+            cd ${{ env.FRONTEND_DIR }} && npm run lint || {
+              echo "Frontend linting found issues. This will not fail the build but should be addressed."
+              exit 0
+            }
+          else
+            echo "Frontend directory or package.json not found, skipping frontend linting"
+          fi
+        continue-on-error: true
+
+
+      - name: Security Audit
+        run: |
+          echo "Running backend audit..."
+          cd ${{ env.BACKEND_DIR }}
+          npm audit fix || true
+          npm audit --audit-level=critical
+
+          cd $GITHUB_WORKSPACE
+          echo "Checking if frontend directory exists..."
+          if [ -d "${{ env.FRONTEND_DIR }}" ] && [ -f "${{ env.FRONTEND_DIR }}/package.json" ]; then
+            echo "Running frontend audit..."
+            cd ${{ env.FRONTEND_DIR }}
+            npm audit fix || true
+            npm audit --audit-level=critical
+          else
+            echo "Frontend directory or package.json not found, skipping frontend audit"
+          fi
+          
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
+
+  # Backend Tests
+  backend-tests:
+    runs-on: ubuntu-latest
+    name: Backend Tests
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: feastfrenzy_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install backend dependencies
+        run: cd ${{ env.BACKEND_DIR }} && npm ci
+
+      - name: Wait for MySQL
+        run: |
+          for i in {30..0}; do
+            if mysqladmin ping -h"127.0.0.1" -P3306 -uroot -ptestpassword --silent; then
+              break
+            fi
+            echo 'MySQL is unavailable - sleeping'
+            sleep 1
+          done
+
+      - name: Run backend tests
+        run: cd ${{ env.BACKEND_DIR }} && npm test -- --forceExit
+        env:
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_PASSWORD: testpassword
+          DB_NAME: feastfrenzy_test
+          DB_PORT: 3306
+
+      - name: Generate test coverage
+        run: cd ${{ env.BACKEND_DIR }} && npm run test:coverage
+        continue-on-error: true
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
+
+  # Frontend Tests
+  frontend-tests:
+    runs-on: ubuntu-latest
+    name: Frontend Tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check frontend directory
+        id: check_frontend
+        run: |
+          if [ -d "${{ env.FRONTEND_DIR }}" ] && [ -f "${{ env.FRONTEND_DIR }}/package.json" ]; then
+            echo "Frontend directory exists"
+            echo "frontend_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Frontend directory or package.json not found, skipping frontend tests"
+            echo "frontend_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        if: steps.check_frontend.outputs.frontend_exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install frontend dependencies
+        if: steps.check_frontend.outputs.frontend_exists == 'true'
+        run: cd ${{ env.FRONTEND_DIR }} && npm ci --legacy-peer-deps
+
+      - name: Run frontend tests
+        if: steps.check_frontend.outputs.frontend_exists == 'true'
+        run: cd ${{ env.FRONTEND_DIR }} && npm run test:ci
+
+      - name: Upload coverage reports
+        if: steps.check_frontend.outputs.frontend_exists == 'true'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
+
+  # Build Applications
+  build:
+    runs-on: ubuntu-latest
+    name: Build Applications
+    needs: [code-quality, backend-tests, frontend-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd ${{ env.BACKEND_DIR }} && npm ci
+          cd $GITHUB_WORKSPACE
+          if [ -d "${{ env.FRONTEND_DIR }}" ] && [ -f "${{ env.FRONTEND_DIR }}/package.json" ]; then
+            echo "Installing frontend dependencies..."
+            cd ${{ env.FRONTEND_DIR }} && npm ci --legacy-peer-deps
+          else
+            echo "Frontend directory not found, skipping frontend dependency installation"
+          fi
+
+      - name: Build backend
+        run: cd ${{ env.BACKEND_DIR }} && npm run build
+        continue-on-error: true
+
+      - name: Build frontend
+        run: |
+          if [ -d "${{ env.FRONTEND_DIR }}" ] && [ -f "${{ env.FRONTEND_DIR }}/package.json" ]; then
+            echo "Building frontend..."
+            cd ${{ env.FRONTEND_DIR }} && npm run build:prod
+          else
+            echo "Frontend directory not found, skipping frontend build"
+          fi
+        continue-on-error: true
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            ./frontend/dist/
+            ./backend/dist/
+          retention-days: 30
+          if-no-files-found: warn
+
+  # Docker Build & Push
+  docker-build:
+    runs-on: ubuntu-latest
+    name: Docker Build & Push
+    needs: [build]
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY_URL || 'ghcr.io' }}
+          username: ${{ vars.DOCKER_REGISTRY_USERNAME || github.actor }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Set lowercase repository name
+        id: repo
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ steps.repo.outputs.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.repo.outputs.name }}/backend:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        continue-on-error: true
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.repo.outputs.name }}/frontend:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        continue-on-error: true
+
+  # Deploy to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [docker-build]
+    if: ${{ github.ref == 'refs/heads/develop' }}
+    environment: 
+      name: staging
+      url: https://staging.feastfrenzy.com
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your staging deployment commands here
+
+  # Deploy to Production
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [docker-build]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    environment: 
+      name: production
+      url: https://feastfrenzy.com
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your production deployment commands here
+
+  # Post-deployment Testing
+  smoke-tests:
+    runs-on: ubuntu-latest
+    name: Smoke Tests
+    needs: [deploy-staging]
+    if: ${{ github.ref == 'refs/heads/develop' }}
+    steps:
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+          # Add smoke test commands here
+
+  # Notification
+  notify:
+    runs-on: ubuntu-latest
+    name: Notify Teams
+    needs: [deploy-production, deploy-staging]
+    if: always()
+    steps:
+      - name: Notify on success
+        if: ${{ needs.deploy-production.result == 'success' || needs.deploy-staging.result == 'success' }}
+        run: |
+          echo "Deployment successful! 🎉"
+
+      - name: Notify on failure
+        if: ${{ needs.deploy-production.result == 'failure' || needs.deploy-staging.result == 'failure' }}
+        run: |
+          echo "Deployment failed! ❌"
