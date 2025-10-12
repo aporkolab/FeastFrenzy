@@ -29,7 +29,7 @@
     "@angular/platform-browser": "^20.0.0",
     "@angular/platform-browser-dynamic": "^20.0.0",
     "@angular/router": "^20.0.0",
-    "@types/node": "^18.19.123",
+    "@types/node": "^18.19.127",
     "bootstrap": "^5.2.3",
     "bootswatch": "^5.3.7",
     "fix": "^0.0.6",
