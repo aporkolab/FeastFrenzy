@@ -1,8 +1,5 @@
 # 🍽️ FeastFrenzy - Enterprise Factory Canteen Management System
 
-[![CI/CD Pipeline](https://github.com/your-username/FeastFrenzy/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/your-username/FeastFrenzy/actions)
-[![Code Quality](https://sonarcloud.io/api/project_badges/measure?project=feastfrenzy&metric=alert_status)](https://sonarcloud.io/dashboard?id=feastfrenzy)
-[![Coverage](https://codecov.io/gh/your-username/FeastFrenzy/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/FeastFrenzy)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![Angular Version](https://img.shields.io/badge/angular-%5E15.0.0-red.svg)](https://angular.io/)
@@ -299,8 +296,6 @@ FeastFrenzy implements enterprise-grade security:
 - **HTTPS** enforced in production
 - **Security Headers** configured
 
-### Reporting Security Issues
-Please report security vulnerabilities to: security@feastfrenzy.com
 
 ## 📜 License
 
