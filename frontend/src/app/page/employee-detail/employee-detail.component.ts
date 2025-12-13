@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { Employee } from 'src/app/model/employee';
 import { EmployeeService } from 'src/app/service/employee.service';
@@ -11,7 +12,7 @@ import { ActivatedRoute, Router } from '@angular/router';
   templateUrl: './employee-detail.component.html',
   styleUrls: ['./employee-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, RouterLink]
 })
 export class EmployeeDetailComponent implements OnInit, OnDestroy {
   employee: Employee | null = null;

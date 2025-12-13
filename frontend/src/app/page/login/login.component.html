@@ -1,0 +1,90 @@
+<div class="container">
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <h2 class="card-title text-center mb-4">Login</h2>
+
+          
+          <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ successMessage }}
+            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+          </div>
+
+          
+          <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ errorMessage }}
+            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            
+            <div class="mb-3">
+              <label for="email" class="form-label">Email address</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                formControlName="email"
+                [class.is-invalid]="f['email'].touched && f['email'].invalid"
+                placeholder="Enter your email"
+              >
+              <div *ngIf="f['email'].touched && f['email'].errors" class="invalid-feedback">
+                <span *ngIf="f['email'].errors['required']">Email is required</span>
+                <span *ngIf="f['email'].errors['email']">Please enter a valid email</span>
+              </div>
+            </div>
+
+            
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input 
+                type="password" 
+                class="form-control" 
+                id="password" 
+                formControlName="password"
+                [class.is-invalid]="f['password'].touched && f['password'].invalid"
+                placeholder="Enter your password"
+              >
+              <div *ngIf="f['password'].touched && f['password'].errors" class="invalid-feedback">
+                <span *ngIf="f['password'].errors['required']">Password is required</span>
+                <span *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</span>
+              </div>
+            </div>
+
+            
+            <div class="mb-3 form-check">
+              <input 
+                type="checkbox" 
+                class="form-check-input" 
+                id="rememberMe" 
+                formControlName="rememberMe"
+              >
+              <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+
+            
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="loading"
+              >
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                {{ loading ? 'Signing in...' : 'Sign In' }}
+              </button>
+            </div>
+          </form>
+
+          
+          <div class="text-center mt-4">
+            <p class="mb-0">
+              Don't have an account? 
+              <a routerLink="/register" class="text-decoration-none">Register here</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

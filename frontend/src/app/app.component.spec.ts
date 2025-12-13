@@ -1,14 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AppComponent } from './app.component';
+import { AuthService } from './service/auth.service';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
         AppComponent,
-        RouterTestingModule
-      ]
+        RouterTestingModule,
+        HttpClientTestingModule
+      ],
+      providers: [AuthService]
     }).compileComponents();
   });
 
@@ -29,5 +33,13 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.navbar-brand')?.textContent).toContain('FeastFrenzy');
+  });
+
+  it('should show login/register when not authenticated', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('a[routerlink="/login"]')).toBeTruthy();
+    expect(compiled.querySelector('a[routerlink="/register"]')).toBeTruthy();
   });
 });

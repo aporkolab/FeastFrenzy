@@ -1,15 +1,27 @@
 <div class="container">
 	<h2>Employee Details</h2>
-	<form>
-		<div class="form-group">
+	
+	
+	<div *ngIf="isLoading" class="text-center">
+		<div class="spinner-border" role="status">
+			<span class="visually-hidden">Loading...</span>
+		</div>
+	</div>
+
+	
+	<div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+	
+	<form *ngIf="employee">
+		<div class="form-group mb-3">
 			<label for="name">Name:</label>
 			<input type="text" class="form-control" id="name" [(ngModel)]="employee.name" name="name" disabled>
 		</div>
-		<div class="form-group">
+		<div class="form-group mb-3">
 			<label for="employeeNumber">Employee Number:</label>
 			<input type="text" class="form-control" id="employeeNumber" [(ngModel)]="employee.employee_number"
 				name="employeeNumber" disabled>
 		</div>
-		<button type="button" class="btn btn-default" routerLink="/employees">Back</button>
+		<button type="button" class="btn btn-secondary" routerLink="/employees">Back</button>
 	</form>
 </div>

@@ -1,0 +1,71 @@
+<div class="container">
+  
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-primary text-white">
+        <div class="card-body py-4">
+          <h1 class="card-title mb-2">
+            {{ getGreeting() }}, {{ currentUser?.name || 'User' }}!
+          </h1>
+          <p class="card-text mb-0 opacity-75">
+            Welcome to FeastFrenzy. What would you like to do today?
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="row g-4">
+    <ng-container *ngFor="let card of navigationCards">
+      <div class="col-md-6 col-lg-3" *ngIf="canAccessCard(card)">
+        <a [routerLink]="card.route" class="text-decoration-none">
+          <div class="card h-100 navigation-card">
+            <div class="card-body text-center">
+              <div class="card-icon mb-3">{{ card.icon }}</div>
+              <h5 class="card-title">{{ card.title }}</h5>
+              <p class="card-text text-muted small">{{ card.description }}</p>
+            </div>
+          </div>
+        </a>
+      </div>
+    </ng-container>
+  </div>
+
+  
+  <div class="row mt-5" *ngIf="currentUser">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Account Information</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless mb-0">
+            <tbody>
+              <tr>
+                <th scope="row" class="text-muted">Name</th>
+                <td>{{ currentUser.name }}</td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-muted">Email</th>
+                <td>{{ currentUser.email }}</td>
+              </tr>
+              <tr>
+                <th scope="row" class="text-muted">Role</th>
+                <td>
+                  <span class="badge" 
+                    [class.bg-danger]="currentUser.role === 'admin'"
+                    [class.bg-warning]="currentUser.role === 'manager'"
+                    [class.bg-info]="currentUser.role === 'employee'"
+                  >
+                    {{ currentUser.role | titlecase }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
