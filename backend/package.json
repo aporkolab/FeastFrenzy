@@ -2,6 +2,15 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
+  "lint-staged": {
+    "*.js": [
+      "npx eslint --fix",
+      "npx prettier --write"
+    ],
+    "*.json": [
+      "npx prettier --write"
+    ]
+  },
   "main": "index.js",
   "scripts": {
     "start": "node ./index.js",
@@ -12,7 +21,7 @@
     "test:coverage": "nyc --check-coverage npm test",
     "test:ci": "nyc --check-coverage --reporter=lcov --reporter=text npm test",
     "coverage:report": "nyc report --reporter=html",
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "build": "echo 'Backend build completed'",
@@ -108,7 +117,7 @@
     "should": "^13.2.3",
     "sqlite3": "^5.1.2",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^4.4.0",
+    "swagger-ui-express": "^4.6.3",
     "uuid": "^13.0.0",
     "winston": "^3.7.2",
     "winston-daily-rotate-file": "^4.7.1",

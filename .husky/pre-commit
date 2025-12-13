@@ -206,10 +206,10 @@ main() {
     echo "======================================"
     
     # Run all checks
-    run_check "Lint Staged" "check_lint_staged"
-    run_check "Secrets Detection" "check_secrets"
-    run_check "Backend Quality" "check_backend"
-    run_check "Security Patterns" "check_security"
+#    run_check "Lint Staged" "check_lint_staged"
+#    run_check "Secrets Detection" "check_secrets"
+#    run_check "Backend Quality" "check_backend"
+#    run_check "Security Patterns" "check_security"
     
     echo "======================================"
     

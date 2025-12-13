@@ -1,12 +1,13 @@
 const path = require('path');
 const winston = require('winston');
 
-
-const customFormat = winston.format.printf(({ level, message, timestamp, requestId, ...meta }) => {
-  const reqIdPart = requestId ? `[${requestId}]` : '';
-  const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
-  return `${timestamp} ${level}: ${reqIdPart} ${message}${metaStr}`;
-});
+const customFormat = winston.format.printf(
+  ({ level, message, timestamp, requestId, ...meta }) => {
+    const reqIdPart = requestId ? `[${requestId}]` : '';
+    const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+    return `${timestamp} ${level}: ${reqIdPart} ${message}${metaStr}`;
+  }
+);
 
 const options = {
   file: {
@@ -39,22 +40,21 @@ const logger = winston.createLogger({
   exitOnError: false,
 });
 
-
 logger.stream = {
   write(message, encoding) {
-    
     logger.info(message.trim());
   },
 };
 
-
-logger.child = function(context) {
+logger.child = function (context) {
   const childLogger = {};
-  ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'].forEach(level => {
-    childLogger[level] = (message, meta = {}) => {
-      logger[level](message, { ...context, ...meta });
-    };
-  });
+  ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'].forEach(
+    level => {
+      childLogger[level] = (message, meta = {}) => {
+        logger[level](message, { ...context, ...meta });
+      };
+    }
+  );
   return childLogger;
 };
 

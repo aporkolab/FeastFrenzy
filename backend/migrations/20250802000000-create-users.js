@@ -1,6 +1,5 @@
 'use strict';
 
-
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('users', {
@@ -70,7 +69,6 @@ module.exports = {
       },
     });
 
-    
     await queryInterface.addIndex('users', ['email'], {
       unique: true,
       name: 'users_email_unique',

@@ -2,12 +2,10 @@
 
 const bcrypt = require('bcrypt');
 
-
 module.exports = {
   async up(queryInterface, Sequelize) {
     const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
 
-    
     const adminPassword = await bcrypt.hash('Admin123!', rounds);
     const managerPassword = await bcrypt.hash('Manager123!', rounds);
     const employeePassword = await bcrypt.hash('Employee123!', rounds);

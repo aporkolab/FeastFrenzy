@@ -64,13 +64,13 @@ module.exports = (sequelize, DataTypes) => {
     {
       timestamps: true,
       hooks: {
-        beforeCreate: async (user) => {
+        beforeCreate: async user => {
           if (user.password) {
             const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
             user.password = await bcrypt.hash(user.password, rounds);
           }
         },
-        beforeUpdate: async (user) => {
+        beforeUpdate: async user => {
           if (user.changed('password')) {
             const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
             user.password = await bcrypt.hash(user.password, rounds);
@@ -80,13 +80,14 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  
   User.prototype.validatePassword = async function (password) {
     return bcrypt.compare(password, this.password);
   };
 
   User.prototype.isLocked = function () {
-    if (!this.lockoutUntil) return false;
+    if (!this.lockoutUntil) {
+      return false;
+    }
     return new Date() < new Date(this.lockoutUntil);
   };
 
@@ -99,7 +100,6 @@ module.exports = (sequelize, DataTypes) => {
     return values;
   };
 
-  
   User.findByEmail = function (email) {
     return this.findOne({ where: { email: email.toLowerCase() } });
   };

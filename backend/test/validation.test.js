@@ -11,11 +11,9 @@ describe('Validation Middleware', () => {
   before(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
-    
-    
+
     await createTestUsers(db);
-    
-    
+
     adminToken = generateTestToken('admin');
   });
 
@@ -24,7 +22,7 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/products`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ price: 10.00 })
+        .send({ price: 10.0 })
         .expect(400);
 
       expect(res.body).to.have.property('success', false);
@@ -68,7 +66,7 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/products`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ name: '', price: 10.00 })
+        .send({ name: '', price: 10.0 })
         .expect(400);
 
       expect(res.body).to.have.property('success', false);
@@ -89,11 +87,11 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/products`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
-          name: 'Test Product', 
-          price: 10.00,
+        .send({
+          name: 'Test Product',
+          price: 10.0,
           unknownField: 'should be stripped',
-          maliciousField: '<script>alert("xss")</script>'
+          maliciousField: '<script>alert("xss")</script>',
         })
         .expect(201);
 
@@ -107,9 +105,9 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/employees`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
+        .send({
           employee_number: 'EMP001',
-          monthlyConsumptionValue: 1000
+          monthlyConsumptionValue: 1000,
         })
         .expect(400);
 
@@ -121,9 +119,9 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/employees`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
+        .send({
           name: 'Test Employee',
-          monthlyConsumptionValue: 1000
+          monthlyConsumptionValue: 1000,
         })
         .expect(400);
 
@@ -135,10 +133,10 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/employees`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
+        .send({
           name: 'Test Employee',
           employee_number: 'EMP001',
-          monthlyConsumptionValue: -100
+          monthlyConsumptionValue: -100,
         })
         .expect(400);
 
@@ -152,9 +150,9 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/purchases`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
+        .send({
           employeeId: 1,
-          total: 100
+          total: 100,
         })
         .expect(400);
 
@@ -166,9 +164,9 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/purchases`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
+        .send({
           date: new Date().toISOString(),
-          total: 100
+          total: 100,
         })
         .expect(400);
 
@@ -180,10 +178,10 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/purchases`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
+        .send({
           date: 'not-a-date',
           employeeId: 1,
-          total: 100
+          total: 100,
         })
         .expect(400);
 
@@ -195,12 +193,11 @@ describe('Validation Middleware', () => {
       const res = await request(app)
         .post(`${API_BASE}/purchases`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ 
+        .send({
           date: new Date().toISOString(),
-          employeeId: 1
+          employeeId: 1,
         });
 
-      
       expect(res.status).to.not.equal(400);
     });
   });
@@ -239,7 +236,6 @@ describe('Validation Middleware', () => {
         .get(`${API_BASE}/products/1`)
         .set('Authorization', `Bearer ${adminToken}`);
 
-      
       expect(res.status).to.not.equal(400);
     });
   });

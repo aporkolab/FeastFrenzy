@@ -13,7 +13,6 @@ module.exports = {
       onDelete: 'SET NULL',
     });
 
-    
     await queryInterface.addIndex('purchases', ['userId'], {
       name: 'purchases_userId_idx',
     });

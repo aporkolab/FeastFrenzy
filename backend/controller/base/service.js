@@ -1,12 +1,10 @@
 const { Sequelize } = require('sequelize');
 const createError = require('http-errors');
 
-
 module.exports = (model, includeList = []) => {
   const modelName = model.name || 'Entity';
 
   return {
-    
     async findAll() {
       try {
         return await model.findAll({
@@ -14,11 +12,13 @@ module.exports = (model, includeList = []) => {
           order: [['id', 'ASC']],
         });
       } catch (error) {
-        throw createError(500, `Failed to retrieve ${modelName} list: ${error.message}`);
+        throw createError(
+          500,
+          `Failed to retrieve ${modelName} list: ${error.message}`
+        );
       }
     },
 
-    
     async findOne(id) {
       try {
         const entity = await model.findOne({
@@ -32,12 +32,16 @@ module.exports = (model, includeList = []) => {
 
         return entity;
       } catch (error) {
-        if (error.status === 404) throw error;
-        throw createError(500, `Failed to retrieve ${modelName}: ${error.message}`);
+        if (error.status === 404) {
+          throw error;
+        }
+        throw createError(
+          500,
+          `Failed to retrieve ${modelName}: ${error.message}`
+        );
       }
     },
 
-    
     async findRandom(limit = 6) {
       try {
         return await model.findAll({
@@ -46,11 +50,13 @@ module.exports = (model, includeList = []) => {
           include: includeList,
         });
       } catch (error) {
-        throw createError(500, `Failed to retrieve random ${modelName}: ${error.message}`);
+        throw createError(
+          500,
+          `Failed to retrieve random ${modelName}: ${error.message}`
+        );
       }
     },
 
-    
     async update(id, updateData) {
       try {
         const entity = await model.findByPk(id);
@@ -62,7 +68,9 @@ module.exports = (model, includeList = []) => {
         await entity.update(updateData);
         return await model.findByPk(id, { include: includeList });
       } catch (error) {
-        if (error.status === 404) throw error;
+        if (error.status === 404) {
+          throw error;
+        }
         if (error.name === 'SequelizeValidationError') {
           const messages = error.errors.map(e => e.message).join(', ');
           throw createError(400, `Validation failed: ${messages}`);
@@ -70,11 +78,13 @@ module.exports = (model, includeList = []) => {
         if (error.name === 'SequelizeUniqueConstraintError') {
           throw createError(409, `${modelName} with this value already exists`);
         }
-        throw createError(500, `Failed to update ${modelName}: ${error.message}`);
+        throw createError(
+          500,
+          `Failed to update ${modelName}: ${error.message}`
+        );
       }
     },
 
-    
     async create(data) {
       try {
         const created = await model.create(data);
@@ -87,11 +97,13 @@ module.exports = (model, includeList = []) => {
         if (error.name === 'SequelizeUniqueConstraintError') {
           throw createError(409, `${modelName} with this value already exists`);
         }
-        throw createError(500, `Failed to create ${modelName}: ${error.message}`);
+        throw createError(
+          500,
+          `Failed to create ${modelName}: ${error.message}`
+        );
       }
     },
 
-    
     async delete(id) {
       try {
         const entity = await model.findByPk(id);
@@ -103,8 +115,13 @@ module.exports = (model, includeList = []) => {
         await entity.destroy();
         return { deleted: true, id };
       } catch (error) {
-        if (error.status === 404) throw error;
-        throw createError(500, `Failed to delete ${modelName}: ${error.message}`);
+        if (error.status === 404) {
+          throw error;
+        }
+        throw createError(
+          500,
+          `Failed to delete ${modelName}: ${error.message}`
+        );
       }
     },
   };

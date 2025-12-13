@@ -1,4 +1,3 @@
-
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-key-at-least-32-chars-long';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-at-least-32-chars';
@@ -7,14 +6,11 @@ process.env.JWT_REFRESH_EXPIRES_IN = '7d';
 process.env.MAX_LOGIN_ATTEMPTS = '5';
 process.env.LOCKOUT_TIME = '15';
 process.env.PASSWORD_RESET_EXPIRES_IN = '60';
-process.env.BCRYPT_ROUNDS = '4'; 
+process.env.BCRYPT_ROUNDS = '4';
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const request = require('supertest');
-
-
-
 
 const testCredentials = {
   admin: { email: 'admin@feastfrenzy.com', password: 'Admin123!' },
@@ -22,13 +18,12 @@ const testCredentials = {
   employee: { email: 'employee@feastfrenzy.com', password: 'Employee123!' },
 };
 
-
 const generateTestToken = (role = 'admin', overrides = {}) => {
   const userIds = { admin: 1, manager: 2, employee: 3 };
   const payload = {
     id: userIds[role] || 1,
     email: testCredentials[role]?.email || 'test@example.com',
-    role: role,
+    role,
     ...overrides,
   };
   return jwt.sign(payload, process.env.JWT_SECRET, {
@@ -36,10 +31,9 @@ const generateTestToken = (role = 'admin', overrides = {}) => {
   });
 };
 
-
-const createTestUsers = async (db) => {
+const createTestUsers = async db => {
   const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 4;
-  
+
   const users = [
     {
       id: 1,
@@ -77,19 +71,17 @@ const createTestUsers = async (db) => {
   return users;
 };
 
-
 const generateExpiredToken = (role = 'admin') => {
   const userIds = { admin: 1, manager: 2, employee: 3 };
   const payload = {
     id: userIds[role],
     email: testCredentials[role]?.email,
-    role: role,
+    role,
   };
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '-1h', 
+    expiresIn: '-1h',
   });
 };
-
 
 const generateInvalidToken = () => {
   return 'invalid.token.here';

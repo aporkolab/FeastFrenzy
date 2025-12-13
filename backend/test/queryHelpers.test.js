@@ -1,5 +1,3 @@
-
-
 const { Op } = require('sequelize');
 const {
   parseSort,
@@ -20,7 +18,9 @@ describe('Query Helpers', () => {
 
     it('should return custom default order when provided', () => {
       const customDefault = [['date', 'DESC']];
-      expect(parseSort(null, allowedFields, customDefault)).toEqual(customDefault);
+      expect(parseSort(null, allowedFields, customDefault)).toEqual(
+        customDefault
+      );
     });
 
     it('should parse single ascending field', () => {
@@ -39,11 +39,15 @@ describe('Query Helpers', () => {
     });
 
     it('should throw error for invalid sort field', () => {
-      expect(() => parseSort('invalidField', allowedFields)).toThrow(/Invalid sort field/);
+      expect(() => parseSort('invalidField', allowedFields)).toThrow(
+        /Invalid sort field/
+      );
     });
 
     it('should throw error even when one field is invalid in multiple', () => {
-      expect(() => parseSort('name,invalid', allowedFields)).toThrow(/Invalid sort field/);
+      expect(() => parseSort('name,invalid', allowedFields)).toThrow(
+        /Invalid sort field/
+      );
     });
 
     it('should handle fields with extra whitespace', () => {
@@ -88,7 +92,10 @@ describe('Query Helpers', () => {
     });
 
     it('should parse multiple filters on same field', () => {
-      const result = parseFilters({ minPrice: '10', maxPrice: '100' }, filterConfig);
+      const result = parseFilters(
+        { minPrice: '10', maxPrice: '100' },
+        filterConfig
+      );
       expect(result).toEqual({
         price: { [Op.gte]: 10, [Op.lte]: 100 },
       });

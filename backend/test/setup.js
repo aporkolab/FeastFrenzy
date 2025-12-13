@@ -1,7 +1,6 @@
 const { Sequelize } = require('sequelize');
 const { expect } = require('chai');
 
-
 const testConfig = {
   dialect: 'sqlite',
   storage: ':memory:',
@@ -13,24 +12,19 @@ const testConfig = {
   },
 };
 
-
 global.testDb = null;
 global.app = null;
 global.request = null;
 
-
 before(async () => {
-  
   process.env.NODE_ENV = 'test';
-  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-at-least-32-chars-long';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'test-jwt-secret-key-at-least-32-chars-long';
   process.env.DB_LOGGING = 'false';
 
-  
   global.testDb = new Sequelize(testConfig);
 
-  
   try {
-    
     await global.testDb.sync({ force: true });
     console.log('✅ Test database synchronized');
   } catch (error) {
@@ -38,7 +32,6 @@ before(async () => {
     throw error;
   }
 
-  
   try {
     global.app = require('../server');
     global.request = require('supertest')(global.app);
@@ -48,14 +41,12 @@ before(async () => {
   }
 });
 
-
 after(async () => {
   if (global.testDb) {
     await global.testDb.close();
     console.log('✅ Test database closed');
   }
 });
-
 
 beforeEach(async () => {
   if (global.testDb) {
@@ -67,9 +58,7 @@ beforeEach(async () => {
   }
 });
 
-
 global.testUtils = {
-  
   createTestUser: async (overrides = {}) => {
     const userData = {
       name: 'Test User',
@@ -80,8 +69,6 @@ global.testUtils = {
     };
 
     try {
-      
-      
       console.warn('⚠️  Test user creation skipped: models not available');
       return userData;
     } catch (error) {
@@ -90,7 +77,6 @@ global.testUtils = {
     }
   },
 
-  
   createTestProduct: async (overrides = {}) => {
     const productData = {
       name: 'Test Product',
@@ -102,8 +88,6 @@ global.testUtils = {
     };
 
     try {
-      
-      
       console.warn('⚠️  Test product creation skipped: models not available');
       return productData;
     } catch (error) {
@@ -112,19 +96,16 @@ global.testUtils = {
     }
   },
 
-  
   createTestPurchase: async (employeeId, _items = [], overrides = {}) => {
     const purchaseData = {
       employeeId,
-      totalAmount: 25.50,
+      totalAmount: 25.5,
       status: 'completed',
       purchaseDate: new Date(),
       ...overrides,
     };
 
     try {
-      
-      
       console.warn('⚠️  Test purchase creation skipped: models not available');
       return purchaseData;
     } catch (error) {
@@ -133,7 +114,6 @@ global.testUtils = {
     }
   },
 
-  
   generateTestToken: (payload = {}) => {
     const jwt = require('jsonwebtoken');
     const defaultPayload = {
@@ -142,15 +122,16 @@ global.testUtils = {
       role: 'employee',
       ...payload,
     };
-    return jwt.sign(defaultPayload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    return jwt.sign(defaultPayload, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
   },
 
-  
-  delay: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+  delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
 
-  
   randomString: (length = 10) => {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const chars =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -159,12 +140,11 @@ global.testUtils = {
   },
 
   randomEmail: () => `test${Date.now()}@example.com`,
-  randomPrice: () => Math.round((Math.random() * 100) * 100) / 100,
+  randomPrice: () => Math.round(Math.random() * 100 * 100) / 100,
 };
 
-
 global.customAssertions = {
-  isValidDate: (received) => {
+  isValidDate: received => {
     expect(received).to.be.an.instanceOf(Date);
     expect(received.getTime()).to.not.be.NaN;
   },
@@ -174,16 +154,14 @@ global.customAssertions = {
     expect(received).to.be.at.most(ceiling);
   },
 
-  hasValidId: (received) => {
+  hasValidId: received => {
     expect(received).to.be.an('object');
     expect(received.id).to.be.a('number');
     expect(received.id).to.be.greaterThan(0);
   },
 };
 
-
 global.expect = expect;
-
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);

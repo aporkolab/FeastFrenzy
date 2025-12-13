@@ -1,11 +1,9 @@
 const baseService = require('./service');
 
-
 module.exports = (model, includeList = []) => {
   const service = baseService(model, includeList);
 
   return {
-    
     async findAll(req, res, next) {
       try {
         const entities = await service.findAll();
@@ -15,7 +13,6 @@ module.exports = (model, includeList = []) => {
       }
     },
 
-    
     async findOne(req, res, next) {
       try {
         const entity = await service.findOne(req.params.id);
@@ -25,7 +22,6 @@ module.exports = (model, includeList = []) => {
       }
     },
 
-    
     async findRandom(req, res, next) {
       try {
         const limit = parseInt(req.query.limit, 10) || 6;
@@ -36,7 +32,6 @@ module.exports = (model, includeList = []) => {
       }
     },
 
-    
     async update(req, res, next) {
       try {
         const entity = await service.update(req.params.id, req.body);
@@ -46,7 +41,6 @@ module.exports = (model, includeList = []) => {
       }
     },
 
-    
     async create(req, res, next) {
       try {
         const entity = await service.create(req.body);
@@ -56,7 +50,6 @@ module.exports = (model, includeList = []) => {
       }
     },
 
-    
     async delete(req, res, next) {
       try {
         const result = await service.delete(req.params.id);

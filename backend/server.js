@@ -4,66 +4,74 @@ const cors = require('cors');
 const logger = require('./logger/logger');
 const httpErrors = require('http-errors');
 const { requestIdMiddleware, getRequestId } = require('./middleware/requestId');
+const { specs, swaggerUi, swaggerOptions } = require('./config/swagger');
 require('dotenv').config();
 
 const app = express();
 
-
-
-
-
 app.use(cors());
-
 
 app.use(requestIdMiddleware);
 
-
-morgan.token('request-id', (req) => req.id || '-');
-app.use(morgan(':request-id :method :url :status :response-time ms', { stream: logger.stream }));
+morgan.token('request-id', req => req.id || '-');
+app.use(
+  morgan(':request-id :method :url :status :response-time ms', {
+    stream: logger.stream,
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static('public'));
 
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
 
-
-
+// Export OpenAPI spec as JSON
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
 
 const API_V1_PREFIX = '/api/v1';
 
-
 app.use(`${API_V1_PREFIX}/auth`, require('./controller/auth/router'));
-
 
 app.use(`${API_V1_PREFIX}/employees`, require('./controller/employee/router'));
 app.use(`${API_V1_PREFIX}/products`, require('./controller/product/router'));
 app.use(`${API_V1_PREFIX}/purchases`, require('./controller/purchase/router'));
-app.use(`${API_V1_PREFIX}/purchase-items`, require('./controller/purchase-item/router'));
-
-
-
-
-
+app.use(
+  `${API_V1_PREFIX}/purchase-items`,
+  require('./controller/purchase-item/router')
+);
 
 app.use('/employees', (req, res) => {
-  res.redirect(301, `${API_V1_PREFIX}/employees${req.url === '/' ? '' : req.url}`);
+  res.redirect(
+    301,
+    `${API_V1_PREFIX}/employees${req.url === '/' ? '' : req.url}`
+  );
 });
 
 app.use('/products', (req, res) => {
-  res.redirect(301, `${API_V1_PREFIX}/products${req.url === '/' ? '' : req.url}`);
+  res.redirect(
+    301,
+    `${API_V1_PREFIX}/products${req.url === '/' ? '' : req.url}`
+  );
 });
 
 app.use('/purchases', (req, res) => {
-  res.redirect(301, `${API_V1_PREFIX}/purchases${req.url === '/' ? '' : req.url}`);
+  res.redirect(
+    301,
+    `${API_V1_PREFIX}/purchases${req.url === '/' ? '' : req.url}`
+  );
 });
 
 app.use('/purchase-items', (req, res) => {
-  res.redirect(301, `${API_V1_PREFIX}/purchase-items${req.url === '/' ? '' : req.url}`);
+  res.redirect(
+    301,
+    `${API_V1_PREFIX}/purchase-items${req.url === '/' ? '' : req.url}`
+  );
 });
-
-
-
-
 
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -74,19 +82,13 @@ app.get('/health', (req, res) => {
   });
 });
 
-
-
-
-
-
 app.use((req, res, next) => {
   next(httpErrors(404, `Route ${req.method} ${req.path} not found`));
 });
 
-
 app.use((err, req, res, next) => {
   const requestId = getRequestId(req);
-  
+
   if (process.env.NODE_ENV !== 'test') {
     logger.error({
       message: err.message,
@@ -117,10 +119,6 @@ app.use((err, req, res, next) => {
 
   res.status(statusCode).json(errorResponse);
 });
-
-
-
-
 
 function getErrorCode(status) {
   const errorCodes = {

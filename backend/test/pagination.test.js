@@ -1,5 +1,3 @@
-
-
 const { paginate } = require('../../middleware/pagination');
 
 describe('Pagination Middleware', () => {
@@ -30,7 +28,7 @@ describe('Pagination Middleware', () => {
       middleware(req, res, next);
 
       expect(req.pagination.page).toBe(3);
-      expect(req.pagination.skip).toBe(40); 
+      expect(req.pagination.skip).toBe(40);
     });
 
     it('should parse limit from query', () => {
@@ -119,7 +117,7 @@ describe('Pagination Middleware', () => {
       const middleware = paginate();
       middleware(req, res, next);
 
-      expect(req.pagination.limit).toBe(20); 
+      expect(req.pagination.limit).toBe(20);
     });
 
     it('should handle floating point values', () => {
@@ -137,7 +135,7 @@ describe('Pagination Middleware', () => {
       middleware(req, res, next);
 
       expect(next).toHaveBeenCalledTimes(1);
-      expect(next).toHaveBeenCalledWith(); 
+      expect(next).toHaveBeenCalledWith();
     });
   });
 });

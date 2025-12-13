@@ -11,11 +11,9 @@ describe('Employees API', () => {
   before(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
-    
-    
+
     await createTestUsers(db);
-    
-    
+
     adminToken = generateTestToken('admin');
     managerToken = generateTestToken('manager');
     employeeToken = generateTestToken('employee');
@@ -27,9 +25,7 @@ describe('Employees API', () => {
 
   describe(`GET ${API_BASE}/employees`, () => {
     it('should return 401 without authentication', async () => {
-      const res = await request(app)
-        .get(`${API_BASE}/employees`)
-        .expect(401);
+      const res = await request(app).get(`${API_BASE}/employees`).expect(401);
 
       expect(res.body).to.have.property('error');
     });
@@ -55,9 +51,21 @@ describe('Employees API', () => {
 
     it('should return all employees for admin', async () => {
       await db.employees.bulkCreate([
-        { name: 'John Doe', employee_number: 'EMP001', monthlyConsumptionValue: 1000 },
-        { name: 'Jane Smith', employee_number: 'EMP002', monthlyConsumptionValue: 2000 },
-        { name: 'Bob Wilson', employee_number: 'EMP003', monthlyConsumptionValue: 1500 },
+        {
+          name: 'John Doe',
+          employee_number: 'EMP001',
+          monthlyConsumptionValue: 1000,
+        },
+        {
+          name: 'Jane Smith',
+          employee_number: 'EMP002',
+          monthlyConsumptionValue: 2000,
+        },
+        {
+          name: 'Bob Wilson',
+          employee_number: 'EMP003',
+          monthlyConsumptionValue: 1500,
+        },
       ]);
 
       const res = await request(app)
@@ -74,8 +82,16 @@ describe('Employees API', () => {
 
     it('should return all employees for manager', async () => {
       await db.employees.bulkCreate([
-        { name: 'John Doe', employee_number: 'EMP001', monthlyConsumptionValue: 1000 },
-        { name: 'Jane Smith', employee_number: 'EMP002', monthlyConsumptionValue: 2000 },
+        {
+          name: 'John Doe',
+          employee_number: 'EMP001',
+          monthlyConsumptionValue: 1000,
+        },
+        {
+          name: 'Jane Smith',
+          employee_number: 'EMP002',
+          monthlyConsumptionValue: 2000,
+        },
       ]);
 
       const res = await request(app)

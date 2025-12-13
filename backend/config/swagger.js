@@ -1,11 +1,10 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const fs = require('fs');
 const path = require('path');
 
 /**
  * Swagger/OpenAPI 3.0 Documentation Configuration
- * Provides comprehensive API documentation with examples and schemas
+ * FeastFrenzy - Employee Cafeteria Management System
  */
 
 const options = {
@@ -13,97 +12,21 @@ const options = {
     openapi: '3.0.0',
     info: {
       title: 'FeastFrenzy API',
-      version: process.env.npm_package_version || '1.0.0',
-      description: `
-# FeastFrenzy Backend API
-
-A comprehensive REST API for managing employee purchases in factory canteens.
-
-## Features
-
-- **Authentication**: JWT-based authentication with refresh tokens
-- **Employee Management**: CRUD operations for employee data
-- **Product Catalog**: Dynamic product management with categories
-- **Purchase System**: Real-time transaction processing
-- **Reporting**: Advanced analytics and consumption reports
-- **Balance Management**: Automatic employee balance tracking
-
-## Authentication
-
-Most endpoints require authentication. Include the JWT token in the Authorization header:
-
-\`\`\`
-Authorization: Bearer <your-jwt-token>
-\`\`\`
-
-## Error Handling
-
-All endpoints return standardized error responses:
-
-\`\`\`json
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human readable error message",
-    "details": {}
-  },
-  "timestamp": "2023-12-01T10:30:00.000Z"
-}
-\`\`\`
-
-## Rate Limiting
-
-API endpoints are rate-limited:
-- **Authentication endpoints**: 5 requests per minute
-- **General endpoints**: 100 requests per minute
-- **Bulk operations**: 10 requests per minute
-
-## Pagination
-
-List endpoints support pagination:
-- \`page\`: Page number (default: 1)
-- \`limit\`: Items per page (default: 10, max: 100)
-- \`sort\`: Sort field
-- \`order\`: Sort order ('asc' or 'desc')
-
-Response includes pagination metadata:
-\`\`\`json
-{
-  "data": [...],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 150,
-    "totalPages": 15,
-    "hasNext": true,
-    "hasPrev": false
-  }
-}
-\`\`\`
-      `,
+      version: '1.0.0',
+      description: 'Employee cafeteria management system API',
       contact: {
-        name: 'FeastFrenzy Team',
-        email: 'support@feastfrenzy.com',
-        url: 'https://github.com/dr.porkolabadam/FeastFrenzy',
-      },
-      license: {
-        name: 'MIT',
-        url: 'https://opensource.org/licenses/MIT',
+        name: 'Ádám Dr. Porkoláb',
+        email: 'adam@feastfrenzy.com',
       },
     },
     servers: [
       {
-        url: process.env.API_BASE_URL || 'http://localhost:3000',
-        description: 'Development server',
+        url: 'http://localhost:3000/api/v1',
+        description: 'Development',
       },
       {
-        url: 'https://api.feastfrenzy.com',
-        description: 'Production server',
-      },
-      {
-        url: 'https://staging-api.feastfrenzy.com',
-        description: 'Staging server',
+        url: 'https://api.feastfrenzy.com/v1',
+        description: 'Production',
       },
     ],
     components: {
@@ -112,248 +35,36 @@ Response includes pagination metadata:
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'JWT authentication token',
-        },
-        apiKeyAuth: {
-          type: 'apiKey',
-          in: 'header',
-          name: 'X-API-Key',
-          description: 'API key for service-to-service communication',
         },
       },
       schemas: {
-        // Employee schemas
-        Employee: {
+        // ==================== AUTH SCHEMAS ====================
+        RegisterRequest: {
           type: 'object',
-          required: ['name', 'email', 'employeeId', 'role'],
+          required: ['name', 'email', 'password'],
           properties: {
-            id: {
-              type: 'integer',
-              description: 'Unique identifier',
-              example: 1,
-            },
-            employeeId: {
-              type: 'string',
-              description: 'Employee ID (unique)',
-              example: 'EMP001',
-              pattern: '^EMP[0-9]{3,}$',
-            },
             name: {
               type: 'string',
-              description: 'Full name',
+              minLength: 1,
+              maxLength: 255,
               example: 'John Doe',
-              minLength: 2,
-              maxLength: 100,
             },
             email: {
               type: 'string',
               format: 'email',
-              description: 'Email address',
-              example: 'john.doe@company.com',
+              maxLength: 255,
+              example: 'john@example.com',
             },
-            role: {
+            password: {
               type: 'string',
-              enum: ['employee', 'manager', 'admin'],
-              description: 'User role',
-              example: 'employee',
-            },
-            balance: {
-              type: 'number',
-              format: 'float',
-              description: 'Current balance in currency',
-              example: 150.50,
-            },
-            isActive: {
-              type: 'boolean',
-              description: 'Whether the employee is active',
-              example: true,
-            },
-            department: {
-              type: 'string',
-              description: 'Department name',
-              example: 'Engineering',
-              maxLength: 50,
-            },
-            hireDate: {
-              type: 'string',
-              format: 'date',
-              description: 'Hire date',
-              example: '2023-01-15',
-            },
-            createdAt: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Record creation timestamp',
-              example: '2023-01-15T10:30:00.000Z',
-            },
-            updatedAt: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Record last update timestamp',
-              example: '2023-12-01T10:30:00.000Z',
+              minLength: 8,
+              maxLength: 128,
+              description: 'Min 8 chars, must contain uppercase and number',
+              example: 'SecurePass123!',
             },
           },
         },
 
-        // Product schemas
-        Product: {
-          type: 'object',
-          required: ['name', 'price', 'category'],
-          properties: {
-            id: {
-              type: 'integer',
-              description: 'Unique identifier',
-              example: 1,
-            },
-            name: {
-              type: 'string',
-              description: 'Product name',
-              example: 'Coffee',
-              minLength: 1,
-              maxLength: 100,
-            },
-            description: {
-              type: 'string',
-              description: 'Product description',
-              example: 'Premium coffee blend',
-              maxLength: 500,
-            },
-            price: {
-              type: 'number',
-              format: 'float',
-              description: 'Product price',
-              example: 2.50,
-              minimum: 0,
-            },
-            category: {
-              type: 'string',
-              description: 'Product category',
-              example: 'Beverages',
-              maxLength: 50,
-            },
-            isAvailable: {
-              type: 'boolean',
-              description: 'Whether the product is available',
-              example: true,
-            },
-            stock: {
-              type: 'integer',
-              description: 'Current stock quantity',
-              example: 100,
-              minimum: 0,
-            },
-            imageUrl: {
-              type: 'string',
-              format: 'uri',
-              description: 'Product image URL',
-              example: 'https://example.com/images/coffee.jpg',
-            },
-            createdAt: {
-              type: 'string',
-              format: 'date-time',
-              example: '2023-01-15T10:30:00.000Z',
-            },
-            updatedAt: {
-              type: 'string',
-              format: 'date-time',
-              example: '2023-12-01T10:30:00.000Z',
-            },
-          },
-        },
-
-        // Purchase schemas
-        Purchase: {
-          type: 'object',
-          required: ['employeeId', 'items'],
-          properties: {
-            id: {
-              type: 'integer',
-              description: 'Unique identifier',
-              example: 1,
-            },
-            employeeId: {
-              type: 'integer',
-              description: 'Employee ID',
-              example: 1,
-            },
-            employee: {
-              $ref: '#/components/schemas/Employee',
-            },
-            items: {
-              type: 'array',
-              items: {
-                $ref: '#/components/schemas/PurchaseItem',
-              },
-            },
-            totalAmount: {
-              type: 'number',
-              format: 'float',
-              description: 'Total purchase amount',
-              example: 15.75,
-            },
-            status: {
-              type: 'string',
-              enum: ['pending', 'completed', 'cancelled', 'refunded'],
-              description: 'Purchase status',
-              example: 'completed',
-            },
-            paymentMethod: {
-              type: 'string',
-              enum: ['balance', 'card', 'cash'],
-              description: 'Payment method used',
-              example: 'balance',
-            },
-            notes: {
-              type: 'string',
-              description: 'Additional notes',
-              maxLength: 500,
-            },
-            createdAt: {
-              type: 'string',
-              format: 'date-time',
-              example: '2023-12-01T10:30:00.000Z',
-            },
-          },
-        },
-
-        PurchaseItem: {
-          type: 'object',
-          required: ['productId', 'quantity', 'unitPrice'],
-          properties: {
-            id: {
-              type: 'integer',
-              example: 1,
-            },
-            productId: {
-              type: 'integer',
-              description: 'Product ID',
-              example: 1,
-            },
-            product: {
-              $ref: '#/components/schemas/Product',
-            },
-            quantity: {
-              type: 'integer',
-              description: 'Quantity purchased',
-              example: 2,
-              minimum: 1,
-            },
-            unitPrice: {
-              type: 'number',
-              format: 'float',
-              description: 'Unit price at time of purchase',
-              example: 2.50,
-            },
-            subtotal: {
-              type: 'number',
-              format: 'float',
-              description: 'Subtotal (quantity * unitPrice)',
-              example: 5.00,
-            },
-          },
-        },
-
-        // Authentication schemas
         LoginRequest: {
           type: 'object',
           required: ['email', 'password'],
@@ -361,19 +72,51 @@ Response includes pagination metadata:
             email: {
               type: 'string',
               format: 'email',
-              description: 'User email',
-              example: 'admin@company.com',
+              example: 'john@example.com',
             },
             password: {
               type: 'string',
-              description: 'User password',
-              example: 'SecurePassword123',
-              minLength: 8,
+              example: 'SecurePass123!',
             },
-            rememberMe: {
-              type: 'boolean',
-              description: 'Extended session duration',
-              example: false,
+          },
+        },
+
+        RefreshTokenRequest: {
+          type: 'object',
+          required: ['refreshToken'],
+          properties: {
+            refreshToken: {
+              type: 'string',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+          },
+        },
+
+        ForgotPasswordRequest: {
+          type: 'object',
+          required: ['email'],
+          properties: {
+            email: {
+              type: 'string',
+              format: 'email',
+              example: 'john@example.com',
+            },
+          },
+        },
+
+        ResetPasswordRequest: {
+          type: 'object',
+          required: ['token', 'newPassword'],
+          properties: {
+            token: {
+              type: 'string',
+              example: 'a1b2c3d4e5f6...',
+            },
+            newPassword: {
+              type: 'string',
+              minLength: 8,
+              maxLength: 128,
+              example: 'NewSecurePass456!',
             },
           },
         },
@@ -381,125 +124,476 @@ Response includes pagination metadata:
         AuthResponse: {
           type: 'object',
           properties: {
-            success: {
-              type: 'boolean',
-              example: true,
-            },
-            data: {
+            user: {
               type: 'object',
               properties: {
-                token: {
+                id: { type: 'integer', example: 1 },
+                name: { type: 'string', example: 'John Doe' },
+                email: { type: 'string', example: 'john@example.com' },
+                role: {
                   type: 'string',
-                  description: 'JWT access token',
+                  enum: ['employee', 'manager', 'admin'],
+                  example: 'employee',
+                },
+              },
+            },
+            tokens: {
+              type: 'object',
+              properties: {
+                accessToken: {
+                  type: 'string',
                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
                 },
                 refreshToken: {
                   type: 'string',
-                  description: 'JWT refresh token',
                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                },
-                expiresIn: {
-                  type: 'integer',
-                  description: 'Token expiration in seconds',
-                  example: 3600,
-                },
-                user: {
-                  $ref: '#/components/schemas/Employee',
                 },
               },
             },
           },
         },
 
-        // Common schemas
-        ApiResponse: {
+        TokensResponse: {
           type: 'object',
           properties: {
-            success: {
-              type: 'boolean',
-              example: true,
-            },
-            data: {
-              type: 'object',
-              description: 'Response data',
-            },
-            message: {
+            accessToken: {
               type: 'string',
-              description: 'Response message',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
             },
-            timestamp: {
+            refreshToken: {
               type: 'string',
-              format: 'date-time',
-              example: '2023-12-01T10:30:00.000Z',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
             },
           },
         },
 
-        Error: {
+        UserProfile: {
           type: 'object',
           properties: {
-            success: {
-              type: 'boolean',
-              example: false,
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer', example: 1 },
+                name: { type: 'string', example: 'John Doe' },
+                email: { type: 'string', example: 'john@example.com' },
+                role: { type: 'string', example: 'employee' },
+                lastLogin: { type: 'string', format: 'date-time' },
+                createdAt: { type: 'string', format: 'date-time' },
+              },
             },
+          },
+        },
+
+        // ==================== PRODUCT SCHEMAS ====================
+        Product: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              example: 'Coffee',
+            },
+            price: {
+              type: 'number',
+              minimum: 0,
+              maximum: 999999.99,
+              example: 2.5,
+            },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        ProductCreate: {
+          type: 'object',
+          required: ['name', 'price'],
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              example: 'Coffee',
+            },
+            price: {
+              type: 'number',
+              minimum: 0,
+              maximum: 999999.99,
+              example: 2.5,
+            },
+          },
+        },
+
+        ProductUpdate: {
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              example: 'Premium Coffee',
+            },
+            price: {
+              type: 'number',
+              minimum: 0,
+              maximum: 999999.99,
+              example: 3.0,
+            },
+          },
+        },
+
+        PaginatedProducts: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/Product' },
+            },
+            meta: { $ref: '#/components/schemas/PaginationMeta' },
+          },
+        },
+
+        // ==================== EMPLOYEE SCHEMAS ====================
+        Employee: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              example: 'John Doe',
+            },
+            employee_number: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 50,
+              example: 'EMP001',
+            },
+            monthlyConsumptionValue: {
+              type: 'integer',
+              minimum: 0,
+              example: 50000,
+            },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        EmployeeCreate: {
+          type: 'object',
+          required: ['name', 'employee_number', 'monthlyConsumptionValue'],
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              example: 'John Doe',
+            },
+            employee_number: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 50,
+              example: 'EMP001',
+            },
+            monthlyConsumptionValue: {
+              type: 'integer',
+              minimum: 0,
+              example: 50000,
+            },
+          },
+        },
+
+        EmployeeUpdate: {
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              example: 'John Doe Updated',
+            },
+            employee_number: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 50,
+              example: 'EMP002',
+            },
+            monthlyConsumptionValue: {
+              type: 'integer',
+              minimum: 0,
+              example: 75000,
+            },
+          },
+        },
+
+        PaginatedEmployees: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/Employee' },
+            },
+            meta: { $ref: '#/components/schemas/PaginationMeta' },
+          },
+        },
+
+        // ==================== PURCHASE SCHEMAS ====================
+        Purchase: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            date: {
+              type: 'string',
+              format: 'date-time',
+              example: '2023-12-01T10:30:00.000Z',
+            },
+            employeeId: { type: 'integer', example: 1 },
+            total: {
+              type: 'number',
+              minimum: 0,
+              maximum: 999999.99,
+              example: 15.5,
+            },
+            closed: { type: 'boolean', example: false },
+            userId: { type: 'integer', example: 1 },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        PurchaseCreate: {
+          type: 'object',
+          required: ['date', 'employeeId'],
+          properties: {
+            date: {
+              type: 'string',
+              format: 'date-time',
+              example: '2023-12-01T10:30:00.000Z',
+            },
+            employeeId: { type: 'integer', example: 1 },
+            total: {
+              type: 'number',
+              minimum: 0,
+              maximum: 999999.99,
+              example: 0,
+            },
+            closed: { type: 'boolean', example: false },
+          },
+        },
+
+        PurchaseUpdate: {
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            date: { type: 'string', format: 'date-time' },
+            employeeId: { type: 'integer' },
+            total: { type: 'number', minimum: 0, maximum: 999999.99 },
+            closed: { type: 'boolean' },
+          },
+        },
+
+        PaginatedPurchases: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/Purchase' },
+            },
+            meta: { $ref: '#/components/schemas/PaginationMeta' },
+          },
+        },
+
+        // ==================== PURCHASE ITEM SCHEMAS ====================
+        PurchaseItem: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            productId: { type: 'integer', example: 1 },
+            purchaseId: { type: 'integer', example: 1 },
+            quantity: { type: 'integer', minimum: 1, example: 2 },
+            price: { type: 'number', example: 2.5 },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        PurchaseItemCreate: {
+          type: 'object',
+          required: ['productId', 'purchaseId', 'quantity', 'price'],
+          properties: {
+            productId: { type: 'integer', example: 1 },
+            purchaseId: { type: 'integer', example: 1 },
+            quantity: { type: 'integer', minimum: 1, example: 2 },
+            price: {
+              type: 'number',
+              minimum: 0,
+              maximum: 999999.99,
+              example: 2.5,
+            },
+          },
+        },
+
+        PurchaseItemUpdate: {
+          type: 'object',
+          minProperties: 1,
+          properties: {
+            quantity: { type: 'integer', minimum: 1, example: 3 },
+            price: {
+              type: 'number',
+              minimum: 0,
+              maximum: 999999.99,
+              example: 3.0,
+            },
+          },
+        },
+
+        PaginatedPurchaseItems: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/PurchaseItem' },
+            },
+            meta: { $ref: '#/components/schemas/PaginationMeta' },
+          },
+        },
+
+        // ==================== COMMON SCHEMAS ====================
+        PaginationMeta: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', example: 1 },
+            limit: { type: 'integer', example: 20 },
+            total: { type: 'integer', example: 150 },
+            totalPages: { type: 'integer', example: 8 },
+            hasNextPage: { type: 'boolean', example: true },
+            hasPrevPage: { type: 'boolean', example: false },
+          },
+        },
+
+        ValidationError: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: false },
             error: {
               type: 'object',
               properties: {
-                code: {
-                  type: 'string',
-                  description: 'Error code',
-                  example: 'VALIDATION_ERROR',
-                },
-                message: {
-                  type: 'string',
-                  description: 'Error message',
-                  example: 'Validation failed',
-                },
+                code: { type: 'string', example: 'VALIDATION_ERROR' },
+                message: { type: 'string', example: 'Validation failed' },
                 details: {
-                  type: 'object',
-                  description: 'Additional error details',
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      field: { type: 'string', example: 'email' },
+                      message: {
+                        type: 'string',
+                        example: 'Invalid email format',
+                      },
+                    },
+                  },
                 },
               },
             },
-            timestamp: {
-              type: 'string',
-              format: 'date-time',
-              example: '2023-12-01T10:30:00.000Z',
-            },
+            timestamp: { type: 'string', format: 'date-time' },
           },
         },
 
-        Pagination: {
+        UnauthorizedError: {
           type: 'object',
           properties: {
-            page: {
-              type: 'integer',
-              example: 1,
+            success: { type: 'boolean', example: false },
+            error: {
+              type: 'object',
+              properties: {
+                code: { type: 'string', example: 'UNAUTHORIZED' },
+                message: { type: 'string', example: 'Authentication required' },
+              },
             },
-            limit: {
-              type: 'integer',
-              example: 10,
-            },
-            total: {
-              type: 'integer',
-              example: 150,
-            },
-            totalPages: {
-              type: 'integer',
-              example: 15,
-            },
-            hasNext: {
-              type: 'boolean',
-              example: true,
-            },
-            hasPrev: {
-              type: 'boolean',
-              example: false,
-            },
+            timestamp: { type: 'string', format: 'date-time' },
           },
         },
 
-        // Health check schemas
+        ForbiddenError: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: false },
+            error: {
+              type: 'object',
+              properties: {
+                code: { type: 'string', example: 'FORBIDDEN' },
+                message: {
+                  type: 'string',
+                  example: 'Insufficient permissions',
+                },
+              },
+            },
+            timestamp: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        NotFoundError: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: false },
+            error: {
+              type: 'object',
+              properties: {
+                code: { type: 'string', example: 'NOT_FOUND' },
+                message: { type: 'string', example: 'Resource not found' },
+              },
+            },
+            timestamp: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        ConflictError: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: false },
+            error: {
+              type: 'object',
+              properties: {
+                code: { type: 'string', example: 'CONFLICT' },
+                message: {
+                  type: 'string',
+                  example: 'Email already registered',
+                },
+              },
+            },
+            timestamp: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        LockedError: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: false },
+            error: {
+              type: 'object',
+              properties: {
+                code: { type: 'string', example: 'LOCKED' },
+                message: {
+                  type: 'string',
+                  example: 'Account locked. Try again in X minute(s)',
+                },
+              },
+            },
+            timestamp: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        MessageResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Operation successful' },
+          },
+        },
+
         HealthResponse: {
           type: 'object',
           properties: {
@@ -508,283 +602,40 @@ Response includes pagination metadata:
               enum: ['healthy', 'unhealthy'],
               example: 'healthy',
             },
-            timestamp: {
-              type: 'string',
-              format: 'date-time',
-              example: '2023-12-01T10:30:00.000Z',
-            },
-            uptime: {
-              type: 'object',
-              properties: {
-                seconds: {
-                  type: 'integer',
-                  example: 86400,
-                },
-                human: {
-                  type: 'string',
-                  example: '1d 0h 0m 0s',
-                },
-              },
-            },
-            checks: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  name: {
-                    type: 'string',
-                    example: 'database',
-                  },
-                  healthy: {
-                    type: 'boolean',
-                    example: true,
-                  },
-                  duration: {
-                    type: 'integer',
-                    example: 45,
-                  },
-                  timestamp: {
-                    type: 'string',
-                    format: 'date-time',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-
-      responses: {
-        UnauthorizedError: {
-          description: 'Authentication token is missing or invalid',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  code: 'UNAUTHORIZED',
-                  message: 'Authentication required',
-                },
-                timestamp: '2023-12-01T10:30:00.000Z',
-              },
-            },
-          },
-        },
-        ForbiddenError: {
-          description: 'Insufficient permissions',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  code: 'FORBIDDEN',
-                  message: 'Insufficient permissions',
-                },
-                timestamp: '2023-12-01T10:30:00.000Z',
-              },
-            },
-          },
-        },
-        NotFoundError: {
-          description: 'Resource not found',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  code: 'NOT_FOUND',
-                  message: 'Resource not found',
-                },
-                timestamp: '2023-12-01T10:30:00.000Z',
-              },
-            },
-          },
-        },
-        ValidationError: {
-          description: 'Validation error',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  code: 'VALIDATION_ERROR',
-                  message: 'Validation failed',
-                  details: {
-                    field: 'email',
-                    message: 'Invalid email format',
-                  },
-                },
-                timestamp: '2023-12-01T10:30:00.000Z',
-              },
-            },
-          },
-        },
-        ServerError: {
-          description: 'Internal server error',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error',
-              },
-              example: {
-                success: false,
-                error: {
-                  code: 'INTERNAL_SERVER_ERROR',
-                  message: 'Internal server error',
-                },
-                timestamp: '2023-12-01T10:30:00.000Z',
-              },
-            },
-          },
-        },
-      },
-
-      parameters: {
-        PageParam: {
-          name: 'page',
-          in: 'query',
-          description: 'Page number for pagination',
-          required: false,
-          schema: {
-            type: 'integer',
-            minimum: 1,
-            default: 1,
-          },
-        },
-        LimitParam: {
-          name: 'limit',
-          in: 'query',
-          description: 'Number of items per page',
-          required: false,
-          schema: {
-            type: 'integer',
-            minimum: 1,
-            maximum: 100,
-            default: 10,
-          },
-        },
-        SortParam: {
-          name: 'sort',
-          in: 'query',
-          description: 'Field to sort by',
-          required: false,
-          schema: {
-            type: 'string',
-            default: 'createdAt',
-          },
-        },
-        OrderParam: {
-          name: 'order',
-          in: 'query',
-          description: 'Sort order',
-          required: false,
-          schema: {
-            type: 'string',
-            enum: ['asc', 'desc'],
-            default: 'desc',
+            timestamp: { type: 'string', format: 'date-time' },
+            uptime: { type: 'number', example: 86400 },
+            requestId: { type: 'string', example: 'req-123-456-789' },
           },
         },
       },
     },
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
+    security: [{ bearerAuth: [] }],
     tags: [
       {
         name: 'Authentication',
-        description: 'Authentication and authorization endpoints',
+        description: 'User authentication and authorization',
       },
-      {
-        name: 'Employees',
-        description: 'Employee management operations',
-      },
-      {
-        name: 'Products',
-        description: 'Product catalog management',
-      },
-      {
-        name: 'Purchases',
-        description: 'Purchase transaction operations',
-      },
-      {
-        name: 'Reports',
-        description: 'Analytics and reporting endpoints',
-      },
-      {
-        name: 'Health',
-        description: 'Health check and monitoring endpoints',
-      },
-      {
-        name: 'Admin',
-        description: 'Administrative operations',
-      },
+      { name: 'Products', description: 'Product management' },
+      { name: 'Employees', description: 'Employee management' },
+      { name: 'Purchases', description: 'Purchase management' },
+      { name: 'Purchase Items', description: 'Purchase item management' },
+      { name: 'Admin', description: 'Administrative endpoints' },
     ],
   },
-  apis: [
-    path.join(__dirname, '../routes/*.js'),
-    path.join(__dirname, '../controllers/*.js'),
-    path.join(__dirname, '../models/*.js'),
-    path.join(__dirname, '../docs/swagger/*.yaml'),
-  ],
+  apis: [path.join(__dirname, '../controller/**/*.js')],
 };
 
 // Generate OpenAPI specification
 const specs = swaggerJsdoc(options);
 
-// Save the generated spec to a file for external use
-const outputPath = path.join(__dirname, '../docs/openapi.json');
-try {
-  fs.writeFileSync(outputPath, JSON.stringify(specs, null, 2));
-} catch (error) {
-  console.warn('Could not write OpenAPI spec to file:', error.message);
-}
-
-// Custom CSS for Swagger UI
-const customCss = `
-  .swagger-ui .topbar { display: none; }
-  .swagger-ui .info .title { color: #3b82f6; }
-  .swagger-ui .info .description p { font-size: 14px; line-height: 1.6; }
-  .swagger-ui .info .description h1 { color: #1f2937; margin-top: 20px; }
-  .swagger-ui .info .description h2 { color: #374151; margin-top: 16px; }
-  .swagger-ui .opblock.opblock-post { border-color: #059669; }
-  .swagger-ui .opblock.opblock-get { border-color: #3b82f6; }
-  .swagger-ui .opblock.opblock-put { border-color: #f59e0b; }
-  .swagger-ui .opblock.opblock-delete { border-color: #ef4444; }
-`;
-
+// Swagger UI options
 const swaggerOptions = {
-  customCss,
-  customSiteTitle: 'FeastFrenzy API Documentation',
-  customfavIcon: '/favicon.ico',
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'FeastFrenzy API Docs',
   swaggerOptions: {
     persistAuthorization: true,
-    displayRequestDuration: true,
-    defaultModelsExpandDepth: 2,
-    defaultModelExpandDepth: 2,
-    docExpansion: 'list',
-    filter: true,
-    showExtensions: true,
-    showCommonExtensions: true,
     tryItOutEnabled: true,
   },
 };
 
-module.exports = {
-  specs,
-  swaggerUi,
-  swaggerOptions,
-};
+module.exports = { specs, swaggerUi, swaggerOptions };

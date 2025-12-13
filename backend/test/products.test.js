@@ -7,15 +7,13 @@ const { generateTestToken, createTestUsers } = require('./test_helper');
 describe('Products API', () => {
   const API_BASE = '/api/v1';
   let adminToken, managerToken, employeeToken;
-  
+
   before(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
-    
-    
+
     await createTestUsers(db);
-    
-    
+
     adminToken = generateTestToken('admin');
     managerToken = generateTestToken('manager');
     employeeToken = generateTestToken('employee');
@@ -27,9 +25,7 @@ describe('Products API', () => {
 
   describe(`GET ${API_BASE}/products`, () => {
     it('should return 401 without authentication', async () => {
-      const res = await request(app)
-        .get(`${API_BASE}/products`)
-        .expect(401);
+      const res = await request(app).get(`${API_BASE}/products`).expect(401);
 
       expect(res.body).to.have.property('error');
     });
@@ -49,9 +45,9 @@ describe('Products API', () => {
 
     it('should return all products for authenticated user with pagination meta', async () => {
       await db.products.bulkCreate([
-        { name: 'Product A', price: 10.00 },
-        { name: 'Product B', price: 20.00 },
-        { name: 'Product C', price: 30.00 },
+        { name: 'Product A', price: 10.0 },
+        { name: 'Product B', price: 20.0 },
+        { name: 'Product C', price: 30.0 },
       ]);
 
       const res = await request(app)
@@ -71,8 +67,8 @@ describe('Products API', () => {
 
     it('should return products for admin', async () => {
       await db.products.bulkCreate([
-        { name: 'Zebra', price: 10.00 },
-        { name: 'Apple', price: 20.00 },
+        { name: 'Zebra', price: 10.0 },
+        { name: 'Apple', price: 20.0 },
       ]);
 
       const res = await request(app)
@@ -84,9 +80,7 @@ describe('Products API', () => {
       expect(res.body.data[1].name).to.equal('Apple');
     });
 
-    
     it('should paginate results correctly', async () => {
-      
       const products = Array.from({ length: 25 }, (_, i) => ({
         name: `Product ${i + 1}`,
         price: (i + 1) * 10,
@@ -133,15 +127,14 @@ describe('Products API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body.meta.limit).to.equal(100); 
+      expect(res.body.meta.limit).to.equal(100);
     });
 
-    
     it('should sort ascending by name', async () => {
       await db.products.bulkCreate([
-        { name: 'Zebra', price: 10.00 },
-        { name: 'Apple', price: 20.00 },
-        { name: 'Banana', price: 15.00 },
+        { name: 'Zebra', price: 10.0 },
+        { name: 'Apple', price: 20.0 },
+        { name: 'Banana', price: 15.0 },
       ]);
 
       const res = await request(app)
@@ -156,9 +149,9 @@ describe('Products API', () => {
 
     it('should sort descending by price', async () => {
       await db.products.bulkCreate([
-        { name: 'Cheap', price: 5.00 },
-        { name: 'Expensive', price: 100.00 },
-        { name: 'Medium', price: 50.00 },
+        { name: 'Cheap', price: 5.0 },
+        { name: 'Expensive', price: 100.0 },
+        { name: 'Medium', price: 50.0 },
       ]);
 
       const res = await request(app)
@@ -166,16 +159,16 @@ describe('Products API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(parseFloat(res.body.data[0].price)).to.equal(100.00);
-      expect(parseFloat(res.body.data[1].price)).to.equal(50.00);
-      expect(parseFloat(res.body.data[2].price)).to.equal(5.00);
+      expect(parseFloat(res.body.data[0].price)).to.equal(100.0);
+      expect(parseFloat(res.body.data[1].price)).to.equal(50.0);
+      expect(parseFloat(res.body.data[2].price)).to.equal(5.0);
     });
 
     it('should sort by multiple fields', async () => {
       await db.products.bulkCreate([
-        { name: 'Apple', price: 20.00 },
-        { name: 'Apple', price: 10.00 },
-        { name: 'Banana', price: 15.00 },
+        { name: 'Apple', price: 20.0 },
+        { name: 'Apple', price: 10.0 },
+        { name: 'Banana', price: 15.0 },
       ]);
 
       const res = await request(app)
@@ -184,9 +177,9 @@ describe('Products API', () => {
         .expect(200);
 
       expect(res.body.data[0].name).to.equal('Apple');
-      expect(parseFloat(res.body.data[0].price)).to.equal(10.00);
+      expect(parseFloat(res.body.data[0].price)).to.equal(10.0);
       expect(res.body.data[1].name).to.equal('Apple');
-      expect(parseFloat(res.body.data[1].price)).to.equal(20.00);
+      expect(parseFloat(res.body.data[1].price)).to.equal(20.0);
     });
 
     it('should return 400 for invalid sort field', async () => {
@@ -198,12 +191,11 @@ describe('Products API', () => {
       expect(res.body.message).to.include('Invalid sort field');
     });
 
-    
     it('should filter by name (LIKE)', async () => {
       await db.products.bulkCreate([
-        { name: 'Pizza Margherita', price: 10.00 },
-        { name: 'Pizza Pepperoni', price: 12.00 },
-        { name: 'Burger', price: 8.00 },
+        { name: 'Pizza Margherita', price: 10.0 },
+        { name: 'Pizza Pepperoni', price: 12.0 },
+        { name: 'Burger', price: 8.0 },
       ]);
 
       const res = await request(app)
@@ -212,14 +204,15 @@ describe('Products API', () => {
         .expect(200);
 
       expect(res.body.data).to.have.lengthOf(2);
-      expect(res.body.data.every(p => p.name.toLowerCase().includes('pizza'))).to.be.true;
+      expect(res.body.data.every(p => p.name.toLowerCase().includes('pizza')))
+        .to.be.true;
     });
 
     it('should filter by price range', async () => {
       await db.products.bulkCreate([
-        { name: 'Cheap', price: 5.00 },
-        { name: 'Medium', price: 15.00 },
-        { name: 'Expensive', price: 100.00 },
+        { name: 'Cheap', price: 5.0 },
+        { name: 'Medium', price: 15.0 },
+        { name: 'Expensive', price: 100.0 },
       ]);
 
       const res = await request(app)
@@ -233,9 +226,9 @@ describe('Products API', () => {
 
     it('should filter by minimum price', async () => {
       await db.products.bulkCreate([
-        { name: 'Cheap', price: 5.00 },
-        { name: 'Medium', price: 15.00 },
-        { name: 'Expensive', price: 100.00 },
+        { name: 'Cheap', price: 5.0 },
+        { name: 'Medium', price: 15.0 },
+        { name: 'Expensive', price: 100.0 },
       ]);
 
       const res = await request(app)
@@ -248,7 +241,6 @@ describe('Products API', () => {
     });
 
     it('should combine pagination, sorting and filtering', async () => {
-      
       const pizzas = Array.from({ length: 15 }, (_, i) => ({
         name: `Pizza ${i + 1}`,
         price: (i + 1) * 2,
@@ -263,7 +255,7 @@ describe('Products API', () => {
 
       expect(res.body.data).to.have.lengthOf(5);
       expect(res.body.meta.total).to.equal(15);
-      
+
       expect(parseFloat(res.body.data[0].price)).to.equal(30);
     });
   });
@@ -272,7 +264,7 @@ describe('Products API', () => {
     it('should return a single product by ID', async () => {
       const product = await db.products.create({
         name: 'Test Product',
-        price: 15.50,
+        price: 15.5,
       });
 
       const res = await request(app)
@@ -282,7 +274,7 @@ describe('Products API', () => {
 
       expect(res.body).to.have.property('id', product.id);
       expect(res.body).to.have.property('name', 'Test Product');
-      expect(parseFloat(res.body.price)).to.equal(15.50);
+      expect(parseFloat(res.body.price)).to.equal(15.5);
     });
 
     it('should return 404 for non-existent product', async () => {
@@ -362,7 +354,7 @@ describe('Products API', () => {
       const res = await request(app)
         .post(`${API_BASE}/products`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ price: 10.00 })
+        .send({ price: 10.0 })
         .expect(400);
 
       expect(res.body).to.have.property('success', false);
@@ -370,12 +362,12 @@ describe('Products API', () => {
     });
 
     it('should return 409 for duplicate product name', async () => {
-      await db.products.create({ name: 'Unique Product', price: 10.00 });
+      await db.products.create({ name: 'Unique Product', price: 10.0 });
 
       const res = await request(app)
         .post(`${API_BASE}/products`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ name: 'Unique Product', price: 20.00 })
+        .send({ name: 'Unique Product', price: 20.0 })
         .expect(409);
 
       expect(res.body).to.have.property('success', false);
@@ -387,13 +379,13 @@ describe('Products API', () => {
     it('should return 403 when employee tries to update', async () => {
       const product = await db.products.create({
         name: 'Original Name',
-        price: 10.00,
+        price: 10.0,
       });
 
       const res = await request(app)
         .put(`${API_BASE}/products/${product.id}`)
         .set('Authorization', `Bearer ${employeeToken}`)
-        .send({ name: 'Updated Name', price: 15.00 })
+        .send({ name: 'Updated Name', price: 15.0 })
         .expect(403);
 
       expect(res.body).to.have.property('error');
@@ -402,17 +394,17 @@ describe('Products API', () => {
     it('should update an existing product with manager token', async () => {
       const product = await db.products.create({
         name: 'Original Name',
-        price: 10.00,
+        price: 10.0,
       });
 
       const res = await request(app)
         .put(`${API_BASE}/products/${product.id}`)
         .set('Authorization', `Bearer ${managerToken}`)
-        .send({ name: 'Updated Name', price: 15.00 })
+        .send({ name: 'Updated Name', price: 15.0 })
         .expect(200);
 
       expect(res.body).to.have.property('name', 'Updated Name');
-      expect(parseFloat(res.body.price)).to.equal(15.00);
+      expect(parseFloat(res.body.price)).to.equal(15.0);
 
       const updated = await db.products.findByPk(product.id);
       expect(updated.name).to.equal('Updated Name');
@@ -422,7 +414,7 @@ describe('Products API', () => {
       const res = await request(app)
         .put(`${API_BASE}/products/99999`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ name: 'Ghost Product', price: 10.00 })
+        .send({ name: 'Ghost Product', price: 10.0 })
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -431,17 +423,17 @@ describe('Products API', () => {
     it('should allow partial updates', async () => {
       const product = await db.products.create({
         name: 'Test Product',
-        price: 10.00,
+        price: 10.0,
       });
 
       const res = await request(app)
         .put(`${API_BASE}/products/${product.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ price: 20.00 })
+        .send({ price: 20.0 })
         .expect(200);
 
       expect(res.body).to.have.property('name', 'Test Product');
-      expect(parseFloat(res.body.price)).to.equal(20.00);
+      expect(parseFloat(res.body.price)).to.equal(20.0);
     });
   });
 
@@ -449,7 +441,7 @@ describe('Products API', () => {
     it('should return 403 when employee tries to delete', async () => {
       const product = await db.products.create({
         name: 'To Be Deleted',
-        price: 10.00,
+        price: 10.0,
       });
 
       const res = await request(app)
@@ -463,7 +455,7 @@ describe('Products API', () => {
     it('should return 403 when manager tries to delete', async () => {
       const product = await db.products.create({
         name: 'Manager Delete Attempt',
-        price: 10.00,
+        price: 10.0,
       });
 
       const res = await request(app)
@@ -477,7 +469,7 @@ describe('Products API', () => {
     it('should delete an existing product with admin token', async () => {
       const product = await db.products.create({
         name: 'To Be Deleted',
-        price: 10.00,
+        price: 10.0,
       });
 
       const res = await request(app)

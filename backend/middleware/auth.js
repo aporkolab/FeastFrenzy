@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const createError = require('http-errors');
 const db = require('../model');
 
-
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -13,7 +12,10 @@ const authenticate = async (req, res, next) => {
 
     const parts = authHeader.split(' ');
     if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      throw createError(401, 'Invalid authorization header format. Use: Bearer <token>');
+      throw createError(
+        401,
+        'Invalid authorization header format. Use: Bearer <token>'
+      );
     }
 
     const token = parts[1];
@@ -31,7 +33,6 @@ const authenticate = async (req, res, next) => {
       throw createError(401, 'Token verification failed');
     }
 
-    
     const user = await db.users.findByPk(decoded.id);
     if (!user) {
       throw createError(401, 'User no longer exists');
@@ -41,7 +42,6 @@ const authenticate = async (req, res, next) => {
       throw createError(401, 'User account is deactivated');
     }
 
-    
     req.user = {
       id: decoded.id,
       email: decoded.email,
@@ -54,7 +54,6 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-
 const authorize = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -63,14 +62,16 @@ const authorize = (...allowedRoles) => {
 
     if (!allowedRoles.includes(req.user.role)) {
       return next(
-        createError(403, `Access denied. Required roles: ${allowedRoles.join(', ')}`)
+        createError(
+          403,
+          `Access denied. Required roles: ${allowedRoles.join(', ')}`
+        )
       );
     }
 
     next();
   };
 };
-
 
 const optionalAuth = async (req, res, next) => {
   try {
@@ -99,7 +100,7 @@ const optionalAuth = async (req, res, next) => {
         };
       }
     } catch {
-      
+      // intentionally ignored
     }
 
     next();

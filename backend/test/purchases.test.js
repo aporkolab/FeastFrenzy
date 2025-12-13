@@ -12,11 +12,9 @@ describe('Purchases API', () => {
   before(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
-    
-    
+
     await createTestUsers(db);
-    
-    
+
     adminToken = generateTestToken('admin');
     managerToken = generateTestToken('manager');
     employeeToken = generateTestToken('employee');
@@ -35,9 +33,7 @@ describe('Purchases API', () => {
 
   describe(`GET ${API_BASE}/purchases`, () => {
     it('should return 401 without authentication', async () => {
-      const res = await request(app)
-        .get(`${API_BASE}/purchases`)
-        .expect(401);
+      const res = await request(app).get(`${API_BASE}/purchases`).expect(401);
 
       expect(res.body).to.have.property('error');
     });
@@ -54,8 +50,20 @@ describe('Purchases API', () => {
 
     it('should return all purchases for admin', async () => {
       await db.purchases.bulkCreate([
-        { employeeId: testEmployee.id, date: new Date(), total: 25.50, closed: false, userId: 1 },
-        { employeeId: testEmployee.id, date: new Date(), total: 15.00, closed: true, userId: 2 },
+        {
+          employeeId: testEmployee.id,
+          date: new Date(),
+          total: 25.5,
+          closed: false,
+          userId: 1,
+        },
+        {
+          employeeId: testEmployee.id,
+          date: new Date(),
+          total: 15.0,
+          closed: true,
+          userId: 2,
+        },
       ]);
 
       const res = await request(app)
@@ -69,8 +77,18 @@ describe('Purchases API', () => {
 
     it('should return all purchases for manager', async () => {
       await db.purchases.bulkCreate([
-        { employeeId: testEmployee.id, date: new Date(), total: 25.50, closed: false },
-        { employeeId: testEmployee.id, date: new Date(), total: 15.00, closed: true },
+        {
+          employeeId: testEmployee.id,
+          date: new Date(),
+          total: 25.5,
+          closed: false,
+        },
+        {
+          employeeId: testEmployee.id,
+          date: new Date(),
+          total: 15.0,
+          closed: true,
+        },
       ]);
 
       const res = await request(app)
@@ -83,22 +101,20 @@ describe('Purchases API', () => {
     });
 
     it('should return only own purchases for employee', async () => {
-      
       await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 25.50,
+        total: 25.5,
         closed: false,
-        userId: 3, 
+        userId: 3,
       });
 
-      
       await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 15.00,
+        total: 15.0,
         closed: true,
-        userId: 1, 
+        userId: 1,
       });
 
       const res = await request(app)
@@ -108,7 +124,7 @@ describe('Purchases API', () => {
 
       expect(res.body).to.be.an('array');
       expect(res.body).to.have.lengthOf(1);
-      expect(parseFloat(res.body[0].total)).to.equal(25.50);
+      expect(parseFloat(res.body[0].total)).to.equal(25.5);
     });
   });
 
@@ -117,9 +133,9 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date('2024-01-15'),
-        total: 50.00,
+        total: 50.0,
         closed: false,
-        userId: 1, 
+        userId: 1,
       });
 
       const res = await request(app)
@@ -134,9 +150,9 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date('2024-01-15'),
-        total: 50.00,
+        total: 50.0,
         closed: false,
-        userId: 3, 
+        userId: 3,
       });
 
       const res = await request(app)
@@ -145,14 +161,14 @@ describe('Purchases API', () => {
         .expect(200);
 
       expect(res.body).to.have.property('id', purchase.id);
-      expect(parseFloat(res.body.total)).to.equal(50.00);
+      expect(parseFloat(res.body.total)).to.equal(50.0);
     });
 
     it('should return any purchase for admin', async () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date('2024-01-15'),
-        total: 50.00,
+        total: 50.0,
         closed: false,
         userId: 3,
       });
@@ -181,7 +197,7 @@ describe('Purchases API', () => {
       const newPurchase = {
         employeeId: testEmployee.id,
         date: '2024-06-15T10:00:00Z',
-        total: 75.50,
+        total: 75.5,
         closed: false,
       };
 
@@ -193,7 +209,7 @@ describe('Purchases API', () => {
 
       expect(res.body).to.have.property('id');
       expect(res.body).to.have.property('employeeId', testEmployee.id);
-      expect(parseFloat(res.body.total)).to.equal(75.50);
+      expect(parseFloat(res.body.total)).to.equal(75.5);
       expect(res.body).to.have.property('closed', false);
 
       const dbPurchase = await db.purchases.findByPk(res.body.id);
@@ -204,7 +220,7 @@ describe('Purchases API', () => {
       const newPurchase = {
         employeeId: testEmployee.id,
         date: '2024-06-15T10:00:00Z',
-        total: 50.00,
+        total: 50.0,
         closed: false,
       };
 
@@ -215,7 +231,7 @@ describe('Purchases API', () => {
         .expect(201);
 
       expect(res.body).to.have.property('id');
-      expect(res.body).to.have.property('userId', 3); 
+      expect(res.body).to.have.property('userId', 3);
 
       const dbPurchase = await db.purchases.findByPk(res.body.id);
       expect(dbPurchase.userId).to.equal(3);
@@ -228,7 +244,7 @@ describe('Purchases API', () => {
         .send({
           employeeId: testEmployee.id,
           date: new Date().toISOString(),
-          total: 100.00,
+          total: 100.0,
           closed: true,
         })
         .expect(201);
@@ -257,15 +273,15 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 30.00,
+        total: 30.0,
         closed: false,
-        userId: 1, 
+        userId: 1,
       });
 
       const res = await request(app)
         .put(`${API_BASE}/purchases/${purchase.id}`)
         .set('Authorization', `Bearer ${employeeToken}`)
-        .send({ total: 45.00, closed: true })
+        .send({ total: 45.0, closed: true })
         .expect(403);
 
       expect(res.body).to.have.property('error');
@@ -275,18 +291,18 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 30.00,
+        total: 30.0,
         closed: false,
-        userId: 3, 
+        userId: 3,
       });
 
       const res = await request(app)
         .put(`${API_BASE}/purchases/${purchase.id}`)
         .set('Authorization', `Bearer ${employeeToken}`)
-        .send({ total: 45.00, closed: true })
+        .send({ total: 45.0, closed: true })
         .expect(200);
 
-      expect(parseFloat(res.body.total)).to.equal(45.00);
+      expect(parseFloat(res.body.total)).to.equal(45.0);
       expect(res.body).to.have.property('closed', true);
     });
 
@@ -294,7 +310,7 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 30.00,
+        total: 30.0,
         closed: false,
         userId: 3,
       });
@@ -302,17 +318,17 @@ describe('Purchases API', () => {
       const res = await request(app)
         .put(`${API_BASE}/purchases/${purchase.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ total: 45.00, closed: true })
+        .send({ total: 45.0, closed: true })
         .expect(200);
 
-      expect(parseFloat(res.body.total)).to.equal(45.00);
+      expect(parseFloat(res.body.total)).to.equal(45.0);
     });
 
     it('should return 404 when updating non-existent purchase', async () => {
       const res = await request(app)
         .put(`${API_BASE}/purchases/99999`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ total: 100.00 })
+        .send({ total: 100.0 })
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -322,7 +338,7 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 50.00,
+        total: 50.0,
         closed: false,
         userId: 2,
       });
@@ -342,7 +358,7 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 20.00,
+        total: 20.0,
         closed: false,
         userId: 3,
       });
@@ -359,7 +375,7 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 20.00,
+        total: 20.0,
         closed: false,
       });
 
@@ -378,7 +394,7 @@ describe('Purchases API', () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
         date: new Date(),
-        total: 20.00,
+        total: 20.0,
         closed: false,
       });
 
@@ -433,9 +449,24 @@ describe('Purchases API', () => {
 
     it('should track open vs closed purchases', async () => {
       await db.purchases.bulkCreate([
-        { employeeId: testEmployee.id, date: new Date(), total: 10, closed: false },
-        { employeeId: testEmployee.id, date: new Date(), total: 20, closed: true },
-        { employeeId: testEmployee.id, date: new Date(), total: 30, closed: false },
+        {
+          employeeId: testEmployee.id,
+          date: new Date(),
+          total: 10,
+          closed: false,
+        },
+        {
+          employeeId: testEmployee.id,
+          date: new Date(),
+          total: 20,
+          closed: true,
+        },
+        {
+          employeeId: testEmployee.id,
+          date: new Date(),
+          total: 30,
+          closed: false,
+        },
       ]);
 
       const res = await request(app)
