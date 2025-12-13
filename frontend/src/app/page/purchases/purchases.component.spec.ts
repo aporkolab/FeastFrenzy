@@ -17,6 +17,7 @@ describe('PurchasesComponent', () => {
     
     const purchaseSpy = {
       getPurchases: jest.fn().mockReturnValue(of(mockPurchases)),
+      getAllPurchases: jest.fn().mockReturnValue(of(mockPurchases)),
       getPurchase: jest.fn(),
       addPurchase: jest.fn(),
       deletePurchase: jest.fn().mockReturnValue(of(void 0))

@@ -36,7 +36,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    this.employeeService.getEmployees()
+    this.employeeService.getAllEmployees()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (employees) => {

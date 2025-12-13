@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Product } from '../model/product';
+import { PaginatedResponse, ProductQueryParams } from '../model/pagination';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap, retry } from 'rxjs/operators';
+import { catchError, tap, retry, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -17,11 +18,20 @@ export class ProductService {
   constructor(private http: HttpClient) {}
 
   
-  getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(this.apiUrl).pipe(
+  getProducts(params?: ProductQueryParams): Observable<PaginatedResponse<Product>> {
+    const httpParams = this.buildHttpParams(params);
+    
+    return this.http.get<PaginatedResponse<Product>>(this.apiUrl, { params: httpParams }).pipe(
       retry(environment.retryAttempts),
-      tap(products => this.productsSubject.next(products)),
+      tap(response => this.productsSubject.next(response.data)),
       catchError(this.handleError)
+    );
+  }
+
+  
+  getAllProducts(): Observable<Product[]> {
+    return this.getProducts({ limit: 1000 }).pipe(
+      map(response => response.data)
     );
   }
 
@@ -59,9 +69,38 @@ export class ProductService {
 
   
   getProductReport(month: string): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.apiUrl}?month=${month}`).pipe(
+    return this.http.get<PaginatedResponse<Product>>(`${this.apiUrl}?month=${month}`).pipe(
+      map(response => response.data),
       catchError(this.handleError)
     );
+  }
+
+  
+  private buildHttpParams(params?: ProductQueryParams): HttpParams {
+    let httpParams = new HttpParams();
+    
+    if (!params) return httpParams;
+
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', params.page.toString());
+    }
+    if (params.limit !== undefined) {
+      httpParams = httpParams.set('limit', params.limit.toString());
+    }
+    if (params.sort) {
+      httpParams = httpParams.set('sort', params.sort);
+    }
+    if (params.name) {
+      httpParams = httpParams.set('name', params.name);
+    }
+    if (params.minPrice !== undefined) {
+      httpParams = httpParams.set('minPrice', params.minPrice.toString());
+    }
+    if (params.maxPrice !== undefined) {
+      httpParams = httpParams.set('maxPrice', params.maxPrice.toString());
+    }
+
+    return httpParams;
   }
 
   

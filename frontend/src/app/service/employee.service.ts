@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap, retry } from 'rxjs/operators';
+import { catchError, tap, retry, map } from 'rxjs/operators';
 import { Employee } from '../model/employee';
+import { PaginatedResponse, EmployeeQueryParams } from '../model/pagination';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -17,11 +18,20 @@ export class EmployeeService {
   constructor(private http: HttpClient) {}
 
   
-  getEmployees(): Observable<Employee[]> {
-    return this.http.get<Employee[]>(this.apiUrl).pipe(
+  getEmployees(params?: EmployeeQueryParams): Observable<PaginatedResponse<Employee>> {
+    const httpParams = this.buildHttpParams(params);
+    
+    return this.http.get<PaginatedResponse<Employee>>(this.apiUrl, { params: httpParams }).pipe(
       retry(environment.retryAttempts),
-      tap(employees => this.employeesSubject.next(employees)),
+      tap(response => this.employeesSubject.next(response.data)),
       catchError(this.handleError)
+    );
+  }
+
+  
+  getAllEmployees(): Observable<Employee[]> {
+    return this.getEmployees({ limit: 1000 }).pipe(
+      map(response => response.data)
     );
   }
 
@@ -55,6 +65,37 @@ export class EmployeeService {
       tap(() => this.refreshEmployees()),
       catchError(this.handleError)
     );
+  }
+
+  
+  private buildHttpParams(params?: EmployeeQueryParams): HttpParams {
+    let httpParams = new HttpParams();
+    
+    if (!params) return httpParams;
+
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', params.page.toString());
+    }
+    if (params.limit !== undefined) {
+      httpParams = httpParams.set('limit', params.limit.toString());
+    }
+    if (params.sort) {
+      httpParams = httpParams.set('sort', params.sort);
+    }
+    if (params.name) {
+      httpParams = httpParams.set('name', params.name);
+    }
+    if (params.employee_number) {
+      httpParams = httpParams.set('employee_number', params.employee_number);
+    }
+    if (params.minConsumption !== undefined) {
+      httpParams = httpParams.set('minConsumption', params.minConsumption.toString());
+    }
+    if (params.maxConsumption !== undefined) {
+      httpParams = httpParams.set('maxConsumption', params.maxConsumption.toString());
+    }
+
+    return httpParams;
   }
 
   

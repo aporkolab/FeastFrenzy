@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Purchase } from '../model/purchase';
+import { PaginatedResponse, PurchaseQueryParams } from '../model/pagination';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap, retry } from 'rxjs/operators';
+import { catchError, tap, retry, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -17,11 +18,20 @@ export class PurchaseService {
   constructor(private http: HttpClient) {}
 
   
-  getPurchases(): Observable<Purchase[]> {
-    return this.http.get<Purchase[]>(this.apiUrl).pipe(
+  getPurchases(params?: PurchaseQueryParams): Observable<PaginatedResponse<Purchase>> {
+    const httpParams = this.buildHttpParams(params);
+    
+    return this.http.get<PaginatedResponse<Purchase>>(this.apiUrl, { params: httpParams }).pipe(
       retry(environment.retryAttempts),
-      tap(purchases => this.purchasesSubject.next(purchases)),
+      tap(response => this.purchasesSubject.next(response.data)),
       catchError(this.handleError)
+    );
+  }
+
+  
+  getAllPurchases(): Observable<Purchase[]> {
+    return this.getPurchases({ limit: 1000 }).pipe(
+      map(response => response.data)
     );
   }
 
@@ -60,9 +70,46 @@ export class PurchaseService {
 
   
   getPurchasesByEmployee(employeeId: number): Observable<Purchase[]> {
-    return this.http.get<Purchase[]>(`${this.apiUrl}?employeeId=${employeeId}`).pipe(
-      catchError(this.handleError)
+    return this.getPurchases({ employeeId }).pipe(
+      map(response => response.data)
     );
+  }
+
+  
+  private buildHttpParams(params?: PurchaseQueryParams): HttpParams {
+    let httpParams = new HttpParams();
+    
+    if (!params) return httpParams;
+
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', params.page.toString());
+    }
+    if (params.limit !== undefined) {
+      httpParams = httpParams.set('limit', params.limit.toString());
+    }
+    if (params.sort) {
+      httpParams = httpParams.set('sort', params.sort);
+    }
+    if (params.employeeId !== undefined) {
+      httpParams = httpParams.set('employeeId', params.employeeId.toString());
+    }
+    if (params.closed !== undefined) {
+      httpParams = httpParams.set('closed', params.closed.toString());
+    }
+    if (params.dateFrom) {
+      httpParams = httpParams.set('dateFrom', params.dateFrom);
+    }
+    if (params.dateTo) {
+      httpParams = httpParams.set('dateTo', params.dateTo);
+    }
+    if (params.minTotal !== undefined) {
+      httpParams = httpParams.set('minTotal', params.minTotal.toString());
+    }
+    if (params.maxTotal !== undefined) {
+      httpParams = httpParams.set('maxTotal', params.maxTotal.toString());
+    }
+
+    return httpParams;
   }
 
   

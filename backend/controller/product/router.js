@@ -4,8 +4,63 @@ const { products } = require('../../model');
 const { validateBody, validateParams } = require('../../middleware/validation');
 const { productSchemas, idParamSchema } = require('../../middleware/validation/schemas');
 const { authenticate, authorize } = require('../../middleware/auth');
+const { paginate } = require('../../middleware/pagination');
+const { parseSort, parseFilters, paginatedResponse, buildQueryOptions } = require('../../utils/queryHelpers');
 
 const controller = require('../base/controller')(products);
+
+
+const FILTER_CONFIG = {
+  name: { 
+    operator: 'LIKE', 
+    transform: v => `%${v}%`,
+  },
+  minPrice: { 
+    field: 'price', 
+    operator: '>=', 
+    type: 'number',
+  },
+  maxPrice: { 
+    field: 'price', 
+    operator: '<=', 
+    type: 'number',
+  },
+};
+
+
+const ALLOWED_SORT_FIELDS = ['id', 'name', 'price'];
+
+
+const paginatedController = {
+  
+  async findAll(req, res, next) {
+    try {
+      
+      const where = parseFilters(req.query, FILTER_CONFIG);
+      
+      
+      const order = parseSort(req.query.sort, ALLOWED_SORT_FIELDS, [['id', 'ASC']]);
+      
+      
+      const queryOptions = buildQueryOptions({
+        pagination: req.pagination,
+        where,
+        order,
+      });
+      
+      
+      const { count, rows } = await products.findAndCountAll(queryOptions);
+      
+      
+      res.status(200).json(paginatedResponse(rows, count, req.pagination));
+    } catch (error) {
+      next(error);
+    }
+  },
+};
+
+
+
 
 
 router.post('/',
@@ -24,7 +79,8 @@ router.get('/rand',
 
 router.get('/',
   authenticate,
-  (req, res, next) => controller.findAll(req, res, next)
+  paginate(20, 100),
+  paginatedController.findAll
 );
 
 

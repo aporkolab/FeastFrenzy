@@ -22,6 +22,7 @@ describe('EmployeesComponent', () => {
     
     const employeeSpy = {
       getEmployees: jest.fn().mockReturnValue(of(mockEmployees)),
+      getAllEmployees: jest.fn().mockReturnValue(of(mockEmployees)),
       getEmployee: jest.fn(),
       updateEmployee: jest.fn(),
       deleteEmployee: jest.fn().mockReturnValue(of(void 0))

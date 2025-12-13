@@ -13,11 +13,13 @@ describe('EmployeeReportComponent', () => {
 
   beforeEach(async () => {
     const employeeSpy = {
-      getEmployees: jest.fn().mockReturnValue(of([]))
+      getEmployees: jest.fn().mockReturnValue(of([])),
+      getAllEmployees: jest.fn().mockReturnValue(of([]))
     };
     
     const purchaseSpy = {
-      getPurchases: jest.fn().mockReturnValue(of([]))
+      getPurchases: jest.fn().mockReturnValue(of([])),
+      getAllPurchases: jest.fn().mockReturnValue(of([]))
     };
 
     await TestBed.configureTestingModule({

@@ -36,12 +36,12 @@ export class EmployeeReportComponent implements OnInit {
   }
 
   getEmployees(): void {
-    this.employeeService.getEmployees()
+    this.employeeService.getAllEmployees()
       .subscribe(employees => this.employees = employees);
   }
 
   getPurchases(): void {
-    this.purchaseService.getPurchases()
+    this.purchaseService.getAllPurchases()
       .subscribe(purchases => this.purchases = purchases);
   }
 
@@ -61,7 +61,7 @@ export class EmployeeReportComponent implements OnInit {
 
 
   updatePrices() {
-    // Logic to update the prices
+    
   }
 
 }

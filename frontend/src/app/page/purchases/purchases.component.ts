@@ -47,7 +47,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    this.purchaseService.getPurchases()
+    this.purchaseService.getAllPurchases()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (purchases) => {

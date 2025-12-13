@@ -40,11 +40,14 @@ describe('Products API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(0);
+      expect(res.body).to.have.property('data');
+      expect(res.body).to.have.property('meta');
+      expect(res.body.data).to.be.an('array');
+      expect(res.body.data).to.have.lengthOf(0);
+      expect(res.body.meta.total).to.equal(0);
     });
 
-    it('should return all products for authenticated user', async () => {
+    it('should return all products for authenticated user with pagination meta', async () => {
       await db.products.bulkCreate([
         { name: 'Product A', price: 10.00 },
         { name: 'Product B', price: 20.00 },
@@ -56,10 +59,14 @@ describe('Products API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(3);
-      expect(res.body[0]).to.have.property('name');
-      expect(res.body[0]).to.have.property('price');
+      expect(res.body).to.have.property('data');
+      expect(res.body).to.have.property('meta');
+      expect(res.body.data).to.be.an('array');
+      expect(res.body.data).to.have.lengthOf(3);
+      expect(res.body.data[0]).to.have.property('name');
+      expect(res.body.data[0]).to.have.property('price');
+      expect(res.body.meta.total).to.equal(3);
+      expect(res.body.meta.page).to.equal(1);
     });
 
     it('should return products for admin', async () => {
@@ -73,8 +80,191 @@ describe('Products API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body[0].name).to.equal('Zebra');
-      expect(res.body[1].name).to.equal('Apple');
+      expect(res.body.data[0].name).to.equal('Zebra');
+      expect(res.body.data[1].name).to.equal('Apple');
+    });
+
+    
+    it('should paginate results correctly', async () => {
+      
+      const products = Array.from({ length: 25 }, (_, i) => ({
+        name: `Product ${i + 1}`,
+        price: (i + 1) * 10,
+      }));
+      await db.products.bulkCreate(products);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?page=1&limit=10`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data).to.have.lengthOf(10);
+      expect(res.body.meta.page).to.equal(1);
+      expect(res.body.meta.limit).to.equal(10);
+      expect(res.body.meta.total).to.equal(25);
+      expect(res.body.meta.totalPages).to.equal(3);
+      expect(res.body.meta.hasNextPage).to.be.true;
+      expect(res.body.meta.hasPrevPage).to.be.false;
+    });
+
+    it('should return second page correctly', async () => {
+      const products = Array.from({ length: 25 }, (_, i) => ({
+        name: `Product ${i + 1}`,
+        price: (i + 1) * 10,
+      }));
+      await db.products.bulkCreate(products);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?page=2&limit=10`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data).to.have.lengthOf(10);
+      expect(res.body.meta.page).to.equal(2);
+      expect(res.body.meta.hasNextPage).to.be.true;
+      expect(res.body.meta.hasPrevPage).to.be.true;
+    });
+
+    it('should enforce max limit', async () => {
+      await db.products.create({ name: 'Test', price: 10 });
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?limit=500`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.meta.limit).to.equal(100); 
+    });
+
+    
+    it('should sort ascending by name', async () => {
+      await db.products.bulkCreate([
+        { name: 'Zebra', price: 10.00 },
+        { name: 'Apple', price: 20.00 },
+        { name: 'Banana', price: 15.00 },
+      ]);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?sort=name`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data[0].name).to.equal('Apple');
+      expect(res.body.data[1].name).to.equal('Banana');
+      expect(res.body.data[2].name).to.equal('Zebra');
+    });
+
+    it('should sort descending by price', async () => {
+      await db.products.bulkCreate([
+        { name: 'Cheap', price: 5.00 },
+        { name: 'Expensive', price: 100.00 },
+        { name: 'Medium', price: 50.00 },
+      ]);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?sort=-price`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(parseFloat(res.body.data[0].price)).to.equal(100.00);
+      expect(parseFloat(res.body.data[1].price)).to.equal(50.00);
+      expect(parseFloat(res.body.data[2].price)).to.equal(5.00);
+    });
+
+    it('should sort by multiple fields', async () => {
+      await db.products.bulkCreate([
+        { name: 'Apple', price: 20.00 },
+        { name: 'Apple', price: 10.00 },
+        { name: 'Banana', price: 15.00 },
+      ]);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?sort=name,price`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data[0].name).to.equal('Apple');
+      expect(parseFloat(res.body.data[0].price)).to.equal(10.00);
+      expect(res.body.data[1].name).to.equal('Apple');
+      expect(parseFloat(res.body.data[1].price)).to.equal(20.00);
+    });
+
+    it('should return 400 for invalid sort field', async () => {
+      const res = await request(app)
+        .get(`${API_BASE}/products?sort=invalidField`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(400);
+
+      expect(res.body.message).to.include('Invalid sort field');
+    });
+
+    
+    it('should filter by name (LIKE)', async () => {
+      await db.products.bulkCreate([
+        { name: 'Pizza Margherita', price: 10.00 },
+        { name: 'Pizza Pepperoni', price: 12.00 },
+        { name: 'Burger', price: 8.00 },
+      ]);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?name=pizza`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data).to.have.lengthOf(2);
+      expect(res.body.data.every(p => p.name.toLowerCase().includes('pizza'))).to.be.true;
+    });
+
+    it('should filter by price range', async () => {
+      await db.products.bulkCreate([
+        { name: 'Cheap', price: 5.00 },
+        { name: 'Medium', price: 15.00 },
+        { name: 'Expensive', price: 100.00 },
+      ]);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?minPrice=10&maxPrice=50`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data).to.have.lengthOf(1);
+      expect(res.body.data[0].name).to.equal('Medium');
+    });
+
+    it('should filter by minimum price', async () => {
+      await db.products.bulkCreate([
+        { name: 'Cheap', price: 5.00 },
+        { name: 'Medium', price: 15.00 },
+        { name: 'Expensive', price: 100.00 },
+      ]);
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?minPrice=10`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data).to.have.lengthOf(2);
+      expect(res.body.data.every(p => parseFloat(p.price) >= 10)).to.be.true;
+    });
+
+    it('should combine pagination, sorting and filtering', async () => {
+      
+      const pizzas = Array.from({ length: 15 }, (_, i) => ({
+        name: `Pizza ${i + 1}`,
+        price: (i + 1) * 2,
+      }));
+      await db.products.bulkCreate(pizzas);
+      await db.products.create({ name: 'Burger', price: 10 });
+
+      const res = await request(app)
+        .get(`${API_BASE}/products?name=pizza&sort=-price&page=1&limit=5`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(200);
+
+      expect(res.body.data).to.have.lengthOf(5);
+      expect(res.body.meta.total).to.equal(15);
+      
+      expect(parseFloat(res.body.data[0].price)).to.equal(30);
     });
   });
 

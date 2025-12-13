@@ -1,19 +1,109 @@
-<table>
-	<tr>
-		<th>ID</th>
-		<th>Name</th>
-		<th>Price</th>
-		<th>Actions</th>
-	</tr>
-	<tr *ngFor="let product of products">
-		<td>{{product.id}}</td>
-		<td>{{product.name}}</td>
-		<td>{{product.price}}</td>
-		<td>
-			<a routerLink="/products/{{product.id}}">View</a>
-			<a routerLink="/products/{{product.id}}/edit">Edit</a>
-			<a (click)="deleteProduct(product)">Delete</a>
-		</td>
-	</tr>
+
+<div *ngIf="isLoading" class="loading">Loading products...</div>
+
+
+<div *ngIf="error" class="error">{{ error }}</div>
+
+
+<div class="filters">
+  <input 
+    type="text" 
+    [(ngModel)]="filters.name" 
+    (ngModelChange)="onFilterChange()"
+    placeholder="Search by name..."
+  />
+  <input 
+    type="number" 
+    [(ngModel)]="filters.minPrice" 
+    (ngModelChange)="onFilterChange()"
+    placeholder="Min price"
+  />
+  <input 
+    type="number" 
+    [(ngModel)]="filters.maxPrice" 
+    (ngModelChange)="onFilterChange()"
+    placeholder="Max price"
+  />
+  <button (click)="clearFilters()">Clear Filters</button>
+</div>
+
+
+<table *ngIf="!isLoading && !error">
+  <thead>
+    <tr>
+      <th (click)="sortBy('id')" class="sortable">
+        ID {{ getSortIcon('id') }}
+      </th>
+      <th (click)="sortBy('name')" class="sortable">
+        Name {{ getSortIcon('name') }}
+      </th>
+      <th (click)="sortBy('price')" class="sortable">
+        Price {{ getSortIcon('price') }}
+      </th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let product of products; trackBy: trackByProductId">
+      <td>{{ product.id }}</td>
+      <td>{{ product.name }}</td>
+      <td>{{ product.price | currency }}</td>
+      <td>
+        <a [routerLink]="['/products', product.id]">View</a>
+        <a [routerLink]="['/products', product.id, 'edit']">Edit</a>
+        <a (click)="deleteProduct(product)" class="delete-link">Delete</a>
+      </td>
+    </tr>
+  </tbody>
 </table>
-<a routerLink="/products/new">Add Product</a>
+
+
+<div *ngIf="!isLoading && !error && products.length === 0" class="empty">
+  No products found.
+</div>
+
+
+<div *ngIf="meta.totalPages > 0" class="pagination">
+  <div class="pagination-info">
+    Showing {{ (meta.page - 1) * meta.limit + 1 }} - 
+    {{ meta.page * meta.limit > meta.total ? meta.total : meta.page * meta.limit }} 
+    of {{ meta.total }} products
+  </div>
+  
+  <div class="pagination-controls">
+    <button (click)="previousPage()" [disabled]="!meta.hasPrevPage">
+      ← Previous
+    </button>
+    
+    <span class="page-numbers">
+      <button 
+        *ngFor="let pageNum of getPageNumbers()" 
+        (click)="goToPage(pageNum)"
+        [class.active]="pageNum === meta.page"
+      >
+        {{ pageNum }}
+      </button>
+    </span>
+    
+    <button (click)="nextPage()" [disabled]="!meta.hasNextPage">
+      Next →
+    </button>
+  </div>
+  
+  <div class="page-size">
+    <label>Items per page:</label>
+    <select 
+      [ngModel]="meta.limit" 
+      (ngModelChange)="onPageSizeChange($event)"
+    >
+      <option *ngFor="let size of pageSizeOptions" [value]="size">
+        {{ size }}
+      </option>
+    </select>
+  </div>
+</div>
+
+
+<div class="actions">
+  <a routerLink="/products/new" class="add-button">Add Product</a>
+</div>

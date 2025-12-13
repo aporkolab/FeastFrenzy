@@ -2,6 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { PurchaseService } from './purchase.service';
 import { Purchase } from '../model/purchase';
+import { PaginatedResponse } from '../model/pagination';
 import { environment } from '../../environments/environment';
 
 describe('PurchaseService', () => {
@@ -14,6 +15,18 @@ describe('PurchaseService', () => {
     { id: 2, date: '2024-01-16T11:00:00Z', closed: true, employeeId: 1, total: 50.00 },
     { id: 3, date: '2024-01-17T12:00:00Z', closed: false, employeeId: 2, total: 75.00 },
   ];
+
+  const mockPaginatedResponse: PaginatedResponse<Purchase> = {
+    data: mockPurchases,
+    meta: {
+      page: 1,
+      limit: 20,
+      total: 3,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false
+    }
+  };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -33,25 +46,31 @@ describe('PurchaseService', () => {
   });
 
   describe('getPurchases', () => {
-    it('should return all purchases', fakeAsync(() => {
-      service.getPurchases().subscribe(purchases => {
-        expect(purchases).toEqual(mockPurchases);
-        expect(purchases.length).toBe(3);
+    it('should return paginated purchases', fakeAsync(() => {
+      service.getPurchases().subscribe(response => {
+        expect(response.data).toEqual(mockPurchases);
+        expect(response.meta.total).toBe(3);
       });
 
       const req = httpMock.expectOne(apiUrl);
       expect(req.request.method).toBe('GET');
-      req.flush(mockPurchases);
+      req.flush(mockPaginatedResponse);
       tick();
     }));
 
-    it('should return empty array when no purchases', fakeAsync(() => {
-      service.getPurchases().subscribe(purchases => {
-        expect(purchases).toEqual([]);
+    it('should return empty data when no purchases', fakeAsync(() => {
+      const emptyResponse: PaginatedResponse<Purchase> = {
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false }
+      };
+
+      service.getPurchases().subscribe(response => {
+        expect(response.data).toEqual([]);
+        expect(response.meta.total).toBe(0);
       });
 
       const req = httpMock.expectOne(apiUrl);
-      req.flush([]);
+      req.flush(emptyResponse);
       tick();
     }));
 
@@ -64,10 +83,24 @@ describe('PurchaseService', () => {
       service.getPurchases().subscribe();
 
       const req = httpMock.expectOne(apiUrl);
-      req.flush(mockPurchases);
+      req.flush(mockPaginatedResponse);
       tick();
 
       expect(emittedPurchases).toEqual(mockPurchases);
+    }));
+  });
+
+  describe('getAllPurchases', () => {
+    it('should return all purchases array', fakeAsync(() => {
+      service.getAllPurchases().subscribe(purchases => {
+        expect(purchases).toEqual(mockPurchases);
+        expect(purchases.length).toBe(3);
+      });
+
+      const req = httpMock.expectOne(`${apiUrl}?limit=1000`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockPaginatedResponse);
+      tick();
     }));
   });
 
@@ -112,7 +145,7 @@ describe('PurchaseService', () => {
       
       const refreshReq = httpMock.expectOne(apiUrl);
       expect(refreshReq.request.method).toBe('GET');
-      refreshReq.flush(mockPurchases);
+      refreshReq.flush(mockPaginatedResponse);
       tick();
     }));
   });
@@ -134,7 +167,7 @@ describe('PurchaseService', () => {
 
       
       const refreshReq = httpMock.expectOne(apiUrl);
-      refreshReq.flush(mockPurchases);
+      refreshReq.flush(mockPaginatedResponse);
       tick();
     }));
   });
@@ -152,7 +185,7 @@ describe('PurchaseService', () => {
 
       
       const refreshReq = httpMock.expectOne(apiUrl);
-      refreshReq.flush(mockPurchases);
+      refreshReq.flush(mockPaginatedResponse);
       tick();
     }));
 
@@ -168,7 +201,7 @@ describe('PurchaseService', () => {
 
       
       const refreshReq = httpMock.expectOne(apiUrl);
-      refreshReq.flush(mockPurchases);
+      refreshReq.flush(mockPaginatedResponse);
       tick();
     }));
   });
@@ -177,6 +210,10 @@ describe('PurchaseService', () => {
     it('should fetch purchases for a specific employee', fakeAsync(() => {
       const employeeId = 1;
       const employeePurchases = mockPurchases.filter(p => p.employeeId === employeeId);
+      const filteredResponse: PaginatedResponse<Purchase> = {
+        data: employeePurchases,
+        meta: { page: 1, limit: 20, total: 2, totalPages: 1, hasNextPage: false, hasPrevPage: false }
+      };
 
       service.getPurchasesByEmployee(employeeId).subscribe(purchases => {
         expect(purchases).toEqual(employeePurchases);
@@ -184,7 +221,7 @@ describe('PurchaseService', () => {
 
       const req = httpMock.expectOne(`${apiUrl}?employeeId=${employeeId}`);
       expect(req.request.method).toBe('GET');
-      req.flush(employeePurchases);
+      req.flush(filteredResponse);
       tick();
     }));
   });
