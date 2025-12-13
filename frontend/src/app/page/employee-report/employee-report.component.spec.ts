@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { EmployeeReportComponent } from './employee-report.component';
 
 describe('EmployeeReportComponent', () => {
@@ -9,20 +10,16 @@ describe('EmployeeReportComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ EmployeeReportComponent, HttpClientTestingModule, RouterTestingModule ]
-    })
-    .compileComponents();
+      imports: [EmployeeReportComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(EmployeeReportComponent);
     component = fixture.componentInstance;
-    
-    // Add mock data to prevent undefined property access
-    component.newPrices = {
-      coffee: 250,
-      soda: 150,
-      menu: 800
-    };
-    
     fixture.detectChanges();
   });
 

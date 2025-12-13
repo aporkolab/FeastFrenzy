@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { ProductReportComponent } from './product-report.component';
 
 describe('ProductReportComponent', () => {
@@ -10,9 +10,13 @@ describe('ProductReportComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ ProductReportComponent, HttpClientTestingModule, RouterTestingModule ]
-    })
-    .compileComponents();
+      imports: [ProductReportComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ProductReportComponent);
     component = fixture.componentInstance;

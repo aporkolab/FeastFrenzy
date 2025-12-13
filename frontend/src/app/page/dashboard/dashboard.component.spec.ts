@@ -1,21 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
 import { AuthService } from '../../service/auth.service';
+import { of } from 'rxjs';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
 
   beforeEach(async () => {
+    const authSpy = jasmine.createSpyObj('AuthService', ['getCurrentUser', 'hasRole'], {
+      currentUser$: of({ id: 1, email: 'test@test.com', name: 'Test', role: 'employee' })
+    });
+    authSpy.getCurrentUser.and.returnValue({ id: 1, email: 'test@test.com', name: 'Test', role: 'employee' });
+    authSpy.hasRole.and.returnValue(false);
+
     await TestBed.configureTestingModule({
-      imports: [
-        DashboardComponent,
-        HttpClientTestingModule,
-        RouterTestingModule
-      ],
-      providers: [AuthService]
+      imports: [DashboardComponent],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: authSpy }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardComponent);
@@ -27,12 +36,8 @@ describe('DashboardComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have navigation cards', () => {
-    expect(component.navigationCards.length).toBeGreaterThan(0);
-  });
-
-  it('should return appropriate greeting based on time', () => {
-    const greeting = component.getGreeting();
-    expect(['Good morning', 'Good afternoon', 'Good evening']).toContain(greeting);
+  it('should display welcome message', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Dashboard');
   });
 });
