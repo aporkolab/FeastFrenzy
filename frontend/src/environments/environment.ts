@@ -1,47 +1,47 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000',
+  apiUrl: 'http://localhost:3000/api/v1',
   appName: 'FeastFrenzy',
   appVersion: '1.0.0',
+
   
-  // Feature flags
   enableLogging: true,
   enableAnalytics: false,
   enablePWA: false,
   enableOfflineMode: false,
+
   
-  // Authentication
   authTokenKey: 'feastfrenzy_auth_token',
   refreshTokenKey: 'feastfrenzy_refresh_token',
-  tokenExpiryBuffer: 300, // 5 minutes buffer before token expiry
+  tokenExpiryBuffer: 300, 
+
   
-  // UI Configuration
   pageSize: 20,
-  maxFileUploadSize: 10485760, // 10MB
+  maxFileUploadSize: 10485760, 
   supportedImageTypes: ['image/jpeg', 'image/png', 'image/gif'],
+
   
-  // Caching
-  cacheTtl: 60000, // 1 minute for dev
+  cacheTtl: 60000, 
   enableServiceWorker: false,
+
   
-  // External services
   googleAnalyticsId: '',
   sentryDsn: '',
+
   
-  // API Configuration
-  apiTimeout: 10000, // 10 seconds for dev
+  apiTimeout: 10000, 
   retryAttempts: 2,
-  retryDelay: 500, // 0.5 second
+  retryDelay: 500, 
+
   
-  // Logging
   logLevel: 'debug',
   enableRemoteLogging: false,
+
   
-  // Security
   enableCSP: false,
   enableXSRFProtection: false,
+
   
-  // Performance
   enablePreloading: false,
   enableLazyLoading: true
 };

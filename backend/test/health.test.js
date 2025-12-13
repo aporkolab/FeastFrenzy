@@ -47,7 +47,7 @@ describe('Health & Error Handling', () => {
 
     it('should return 404 for unknown API routes', async () => {
       const res = await request(app)
-        .get('/api/unknown-endpoint')
+        .get('/api/v2/unknown-endpoint')
         .expect(404);
 
       expect(res.body).to.have.property('success', false);

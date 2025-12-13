@@ -4,6 +4,7 @@ const app = require('../server');
 const db = require('../model');
 
 describe('Products API', () => {
+  const API_BASE = '/api/v1';
   
   before(async () => {
     process.env.NODE_ENV = 'test';
@@ -17,10 +18,10 @@ describe('Products API', () => {
 
   
 
-  describe('GET /products', () => {
+  describe(`GET ${API_BASE}/products`, () => {
     it('should return empty array when no products exist', async () => {
       const res = await request(app)
-        .get('/products')
+        .get(`${API_BASE}/products`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -37,7 +38,7 @@ describe('Products API', () => {
 
       
       const res = await request(app)
-        .get('/products')
+        .get(`${API_BASE}/products`)
         .expect(200);
 
       
@@ -54,7 +55,7 @@ describe('Products API', () => {
       ]);
 
       const res = await request(app)
-        .get('/products')
+        .get(`${API_BASE}/products`)
         .expect(200);
 
       
@@ -63,7 +64,7 @@ describe('Products API', () => {
     });
   });
 
-  describe('GET /products/:id', () => {
+  describe(`GET ${API_BASE}/products/:id`, () => {
     it('should return a single product by ID', async () => {
       const product = await db.products.create({
         name: 'Test Product',
@@ -71,7 +72,7 @@ describe('Products API', () => {
       });
 
       const res = await request(app)
-        .get(`/products/${product.id}`)
+        .get(`${API_BASE}/products/${product.id}`)
         .expect(200);
 
       expect(res.body).to.have.property('id', product.id);
@@ -81,7 +82,7 @@ describe('Products API', () => {
 
     it('should return 404 for non-existent product', async () => {
       const res = await request(app)
-        .get('/products/99999')
+        .get(`${API_BASE}/products/99999`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -90,7 +91,7 @@ describe('Products API', () => {
 
     it('should return 400 for invalid ID format', async () => {
       const res = await request(app)
-        .get('/products/invalid-id')
+        .get(`${API_BASE}/products/invalid-id`)
         .expect(400);
 
       expect(res.body).to.have.property('success', false);
@@ -98,7 +99,7 @@ describe('Products API', () => {
     });
   });
 
-  describe('POST /products', () => {
+  describe(`POST ${API_BASE}/products`, () => {
     it('should create a new product with valid data', async () => {
       const newProduct = {
         name: 'New Product',
@@ -106,7 +107,7 @@ describe('Products API', () => {
       };
 
       const res = await request(app)
-        .post('/products')
+        .post(`${API_BASE}/products`)
         .send(newProduct)
         .expect(201);
 
@@ -121,7 +122,7 @@ describe('Products API', () => {
 
     it('should return 400 for missing required fields', async () => {
       const res = await request(app)
-        .post('/products')
+        .post(`${API_BASE}/products`)
         .send({ price: 10.00 }) 
         .expect(400);
 
@@ -133,7 +134,7 @@ describe('Products API', () => {
       await db.products.create({ name: 'Unique Product', price: 10.00 });
 
       const res = await request(app)
-        .post('/products')
+        .post(`${API_BASE}/products`)
         .send({ name: 'Unique Product', price: 20.00 })
         .expect(409);
 
@@ -142,7 +143,7 @@ describe('Products API', () => {
     });
   });
 
-  describe('PUT /products/:id', () => {
+  describe(`PUT ${API_BASE}/products/:id`, () => {
     it('should update an existing product', async () => {
       const product = await db.products.create({
         name: 'Original Name',
@@ -150,7 +151,7 @@ describe('Products API', () => {
       });
 
       const res = await request(app)
-        .put(`/products/${product.id}`)
+        .put(`${API_BASE}/products/${product.id}`)
         .send({ name: 'Updated Name', price: 15.00 })
         .expect(200);
 
@@ -164,7 +165,7 @@ describe('Products API', () => {
 
     it('should return 404 when updating non-existent product', async () => {
       const res = await request(app)
-        .put('/products/99999')
+        .put(`${API_BASE}/products/99999`)
         .send({ name: 'Ghost Product', price: 10.00 })
         .expect(404);
 
@@ -178,7 +179,7 @@ describe('Products API', () => {
       });
 
       const res = await request(app)
-        .put(`/products/${product.id}`)
+        .put(`${API_BASE}/products/${product.id}`)
         .send({ price: 20.00 })
         .expect(200);
 
@@ -187,7 +188,7 @@ describe('Products API', () => {
     });
   });
 
-  describe('DELETE /products/:id', () => {
+  describe(`DELETE ${API_BASE}/products/:id`, () => {
     it('should delete an existing product', async () => {
       const product = await db.products.create({
         name: 'To Be Deleted',
@@ -195,7 +196,7 @@ describe('Products API', () => {
       });
 
       const res = await request(app)
-        .delete(`/products/${product.id}`)
+        .delete(`${API_BASE}/products/${product.id}`)
         .expect(200);
 
       expect(res.body).to.have.property('deleted', true);
@@ -207,7 +208,7 @@ describe('Products API', () => {
 
     it('should return 404 when deleting non-existent product', async () => {
       const res = await request(app)
-        .delete('/products/99999')
+        .delete(`${API_BASE}/products/99999`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);

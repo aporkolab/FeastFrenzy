@@ -4,6 +4,7 @@ const app = require('../server');
 const db = require('../model');
 
 describe('Purchases API', () => {
+  const API_BASE = '/api/v1';
   let testEmployee;
 
   before(async () => {
@@ -26,10 +27,10 @@ describe('Purchases API', () => {
 
   
 
-  describe('GET /purchases', () => {
+  describe(`GET ${API_BASE}/purchases`, () => {
     it('should return empty array when no purchases exist', async () => {
       const res = await request(app)
-        .get('/purchases')
+        .get(`${API_BASE}/purchases`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -43,7 +44,7 @@ describe('Purchases API', () => {
       ]);
 
       const res = await request(app)
-        .get('/purchases')
+        .get(`${API_BASE}/purchases`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -51,7 +52,7 @@ describe('Purchases API', () => {
     });
   });
 
-  describe('GET /purchases/:id', () => {
+  describe(`GET ${API_BASE}/purchases/:id`, () => {
     it('should return a single purchase by ID', async () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
@@ -61,7 +62,7 @@ describe('Purchases API', () => {
       });
 
       const res = await request(app)
-        .get(`/purchases/${purchase.id}`)
+        .get(`${API_BASE}/purchases/${purchase.id}`)
         .expect(200);
 
       expect(res.body).to.have.property('id', purchase.id);
@@ -71,7 +72,7 @@ describe('Purchases API', () => {
 
     it('should return 404 for non-existent purchase', async () => {
       const res = await request(app)
-        .get('/purchases/99999')
+        .get(`${API_BASE}/purchases/99999`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -79,7 +80,7 @@ describe('Purchases API', () => {
     });
   });
 
-  describe('POST /purchases', () => {
+  describe(`POST ${API_BASE}/purchases`, () => {
     it('should create a new purchase', async () => {
       const newPurchase = {
         employeeId: testEmployee.id,
@@ -89,7 +90,7 @@ describe('Purchases API', () => {
       };
 
       const res = await request(app)
-        .post('/purchases')
+        .post(`${API_BASE}/purchases`)
         .send(newPurchase)
         .expect(201);
 
@@ -105,7 +106,7 @@ describe('Purchases API', () => {
 
     it('should create a closed purchase', async () => {
       const res = await request(app)
-        .post('/purchases')
+        .post(`${API_BASE}/purchases`)
         .send({
           employeeId: testEmployee.id,
           date: new Date().toISOString(),
@@ -119,7 +120,7 @@ describe('Purchases API', () => {
 
     it('should handle zero total purchase', async () => {
       const res = await request(app)
-        .post('/purchases')
+        .post(`${API_BASE}/purchases`)
         .send({
           employeeId: testEmployee.id,
           date: new Date().toISOString(),
@@ -132,7 +133,7 @@ describe('Purchases API', () => {
     });
   });
 
-  describe('PUT /purchases/:id', () => {
+  describe(`PUT ${API_BASE}/purchases/:id`, () => {
     it('should update an existing purchase', async () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
@@ -142,7 +143,7 @@ describe('Purchases API', () => {
       });
 
       const res = await request(app)
-        .put(`/purchases/${purchase.id}`)
+        .put(`${API_BASE}/purchases/${purchase.id}`)
         .send({ total: 45.00, closed: true })
         .expect(200);
 
@@ -152,7 +153,7 @@ describe('Purchases API', () => {
 
     it('should return 404 when updating non-existent purchase', async () => {
       const res = await request(app)
-        .put('/purchases/99999')
+        .put(`${API_BASE}/purchases/99999`)
         .send({ total: 100.00 })
         .expect(404);
 
@@ -168,7 +169,7 @@ describe('Purchases API', () => {
       });
 
       const res = await request(app)
-        .put(`/purchases/${purchase.id}`)
+        .put(`${API_BASE}/purchases/${purchase.id}`)
         .send({ closed: true })
         .expect(200);
 
@@ -176,7 +177,7 @@ describe('Purchases API', () => {
     });
   });
 
-  describe('DELETE /purchases/:id', () => {
+  describe(`DELETE ${API_BASE}/purchases/:id`, () => {
     it('should delete an existing purchase', async () => {
       const purchase = await db.purchases.create({
         employeeId: testEmployee.id,
@@ -186,7 +187,7 @@ describe('Purchases API', () => {
       });
 
       const res = await request(app)
-        .delete(`/purchases/${purchase.id}`)
+        .delete(`${API_BASE}/purchases/${purchase.id}`)
         .expect(200);
 
       expect(res.body).to.have.property('deleted', true);
@@ -197,7 +198,7 @@ describe('Purchases API', () => {
 
     it('should return 404 when deleting non-existent purchase', async () => {
       const res = await request(app)
-        .delete('/purchases/99999')
+        .delete(`${API_BASE}/purchases/99999`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -207,7 +208,7 @@ describe('Purchases API', () => {
   describe('Business Logic', () => {
     it('should handle large purchase amounts', async () => {
       const res = await request(app)
-        .post('/purchases')
+        .post(`${API_BASE}/purchases`)
         .send({
           employeeId: testEmployee.id,
           date: new Date().toISOString(),
@@ -221,7 +222,7 @@ describe('Purchases API', () => {
 
     it('should handle decimal precision correctly', async () => {
       const res = await request(app)
-        .post('/purchases')
+        .post(`${API_BASE}/purchases`)
         .send({
           employeeId: testEmployee.id,
           date: new Date().toISOString(),
@@ -241,7 +242,7 @@ describe('Purchases API', () => {
       ]);
 
       const res = await request(app)
-        .get('/purchases')
+        .get(`${API_BASE}/purchases`)
         .expect(200);
 
       const openPurchases = res.body.filter(p => !p.closed);

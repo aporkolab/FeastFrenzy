@@ -4,6 +4,8 @@ const app = require('../server');
 const db = require('../model');
 
 describe('Employees API', () => {
+  const API_BASE = '/api/v1';
+
   before(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
@@ -15,10 +17,10 @@ describe('Employees API', () => {
 
   
 
-  describe('GET /employees', () => {
+  describe(`GET ${API_BASE}/employees`, () => {
     it('should return empty array when no employees exist', async () => {
       const res = await request(app)
-        .get('/employees')
+        .get(`${API_BASE}/employees`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -33,7 +35,7 @@ describe('Employees API', () => {
       ]);
 
       const res = await request(app)
-        .get('/employees')
+        .get(`${API_BASE}/employees`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -44,7 +46,7 @@ describe('Employees API', () => {
     });
   });
 
-  describe('GET /employees/:id', () => {
+  describe(`GET ${API_BASE}/employees/:id`, () => {
     it('should return a single employee by ID', async () => {
       const employee = await db.employees.create({
         name: 'Test Employee',
@@ -53,7 +55,7 @@ describe('Employees API', () => {
       });
 
       const res = await request(app)
-        .get(`/employees/${employee.id}`)
+        .get(`${API_BASE}/employees/${employee.id}`)
         .expect(200);
 
       expect(res.body).to.have.property('id', employee.id);
@@ -64,7 +66,7 @@ describe('Employees API', () => {
 
     it('should return 404 for non-existent employee', async () => {
       const res = await request(app)
-        .get('/employees/99999')
+        .get(`${API_BASE}/employees/99999`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -72,7 +74,7 @@ describe('Employees API', () => {
     });
   });
 
-  describe('POST /employees', () => {
+  describe(`POST ${API_BASE}/employees`, () => {
     it('should create a new employee with valid data', async () => {
       const newEmployee = {
         name: 'New Employee',
@@ -81,7 +83,7 @@ describe('Employees API', () => {
       };
 
       const res = await request(app)
-        .post('/employees')
+        .post(`${API_BASE}/employees`)
         .send(newEmployee)
         .expect(201);
 
@@ -97,7 +99,7 @@ describe('Employees API', () => {
 
     it('should return 400 for missing required name', async () => {
       const res = await request(app)
-        .post('/employees')
+        .post(`${API_BASE}/employees`)
         .send({ employee_number: 'EMP999', monthlyConsumptionValue: 1000 })
         .expect(400);
 
@@ -112,7 +114,7 @@ describe('Employees API', () => {
       });
 
       const res = await request(app)
-        .post('/employees')
+        .post(`${API_BASE}/employees`)
         .send({
           name: 'Second Employee',
           employee_number: 'EMP001', 
@@ -125,7 +127,7 @@ describe('Employees API', () => {
     });
   });
 
-  describe('PUT /employees/:id', () => {
+  describe(`PUT ${API_BASE}/employees/:id`, () => {
     it('should update an existing employee', async () => {
       const employee = await db.employees.create({
         name: 'Original Name',
@@ -134,7 +136,7 @@ describe('Employees API', () => {
       });
 
       const res = await request(app)
-        .put(`/employees/${employee.id}`)
+        .put(`${API_BASE}/employees/${employee.id}`)
         .send({ name: 'Updated Name', monthlyConsumptionValue: 200 })
         .expect(200);
 
@@ -144,7 +146,7 @@ describe('Employees API', () => {
 
     it('should return 404 when updating non-existent employee', async () => {
       const res = await request(app)
-        .put('/employees/99999')
+        .put(`${API_BASE}/employees/99999`)
         .send({ name: 'Ghost', monthlyConsumptionValue: 0 })
         .expect(404);
 
@@ -159,7 +161,7 @@ describe('Employees API', () => {
       });
 
       const res = await request(app)
-        .put(`/employees/${employee.id}`)
+        .put(`${API_BASE}/employees/${employee.id}`)
         .send({ monthlyConsumptionValue: 500 })
         .expect(200);
 
@@ -168,7 +170,7 @@ describe('Employees API', () => {
     });
   });
 
-  describe('DELETE /employees/:id', () => {
+  describe(`DELETE ${API_BASE}/employees/:id`, () => {
     it('should delete an existing employee', async () => {
       const employee = await db.employees.create({
         name: 'To Delete',
@@ -177,7 +179,7 @@ describe('Employees API', () => {
       });
 
       const res = await request(app)
-        .delete(`/employees/${employee.id}`)
+        .delete(`${API_BASE}/employees/${employee.id}`)
         .expect(200);
 
       expect(res.body).to.have.property('deleted', true);
@@ -188,7 +190,7 @@ describe('Employees API', () => {
 
     it('should return 404 when deleting non-existent employee', async () => {
       const res = await request(app)
-        .delete('/employees/99999')
+        .delete(`${API_BASE}/employees/99999`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -198,7 +200,7 @@ describe('Employees API', () => {
   describe('Business Logic', () => {
     it('should handle zero consumption value', async () => {
       const res = await request(app)
-        .post('/employees')
+        .post(`${API_BASE}/employees`)
         .send({
           name: 'Zero Consumption',
           employee_number: 'EMP600',
@@ -211,7 +213,7 @@ describe('Employees API', () => {
 
     it('should handle large consumption values', async () => {
       const res = await request(app)
-        .post('/employees')
+        .post(`${API_BASE}/employees`)
         .send({
           name: 'Big Spender',
           employee_number: 'EMP700',
