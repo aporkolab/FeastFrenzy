@@ -1,13 +1,23 @@
 const request = require('supertest');
 const { expect } = require('chai');
 const app = require('../server');
+const db = require('../model');
+const { generateTestToken, createTestUsers } = require('./test_helper');
 
 describe('Request ID & API Versioning', () => {
   const API_BASE = '/api/v1';
+  let adminToken;
 
-  
-  
-  
+  before(async () => {
+    process.env.NODE_ENV = 'test';
+    await db.sequelize.sync({ force: true });
+    
+    
+    await createTestUsers(db);
+    
+    
+    adminToken = generateTestToken('admin');
+  });
 
   describe('Request ID Middleware', () => {
     it('should return X-Request-ID header in response', async () => {
@@ -60,16 +70,13 @@ describe('Request ID & API Versioning', () => {
     it('should include X-Request-ID in API responses', async () => {
       const res = await request(app)
         .get(`${API_BASE}/products`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.headers).to.have.property('x-request-id');
       expect(res.headers['x-request-id']).to.be.a('string');
     });
   });
-
-  
-  
-  
 
   describe('Legacy Route Redirects', () => {
     it('should redirect /products to /api/v1/products with 301', async () => {
@@ -117,21 +124,17 @@ describe('Request ID & API Versioning', () => {
         .get('/products?page=2&limit=10')
         .expect(301);
 
-      
       expect(res.headers.location).to.include('/api/v1/products');
       expect(res.headers.location).to.include('page=2');
       expect(res.headers.location).to.include('limit=10');
     });
   });
 
-  
-  
-  
-
   describe('API Versioning', () => {
     it('should respond to /api/v1/products', async () => {
       const res = await request(app)
         .get('/api/v1/products')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -140,6 +143,7 @@ describe('Request ID & API Versioning', () => {
     it('should respond to /api/v1/employees', async () => {
       const res = await request(app)
         .get('/api/v1/employees')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -148,6 +152,7 @@ describe('Request ID & API Versioning', () => {
     it('should respond to /api/v1/purchases', async () => {
       const res = await request(app)
         .get('/api/v1/purchases')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.body).to.be.an('array');

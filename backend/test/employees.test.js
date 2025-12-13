@@ -2,32 +2,58 @@ const request = require('supertest');
 const { expect } = require('chai');
 const app = require('../server');
 const db = require('../model');
+const { generateTestToken, createTestUsers } = require('./test_helper');
 
 describe('Employees API', () => {
   const API_BASE = '/api/v1';
+  let adminToken, managerToken, employeeToken;
 
   before(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
+    
+    
+    await createTestUsers(db);
+    
+    
+    adminToken = generateTestToken('admin');
+    managerToken = generateTestToken('manager');
+    employeeToken = generateTestToken('employee');
   });
 
   beforeEach(async () => {
     await db.employees.destroy({ where: {}, truncate: true });
   });
 
-  
-
   describe(`GET ${API_BASE}/employees`, () => {
-    it('should return empty array when no employees exist', async () => {
+    it('should return 401 without authentication', async () => {
       const res = await request(app)
         .get(`${API_BASE}/employees`)
+        .expect(401);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should return 403 when employee tries to list all employees', async () => {
+      const res = await request(app)
+        .get(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(403);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should return empty array for manager when no employees exist', async () => {
+      const res = await request(app)
+        .get(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
       expect(res.body).to.have.lengthOf(0);
     });
 
-    it('should return all employees', async () => {
+    it('should return all employees for admin', async () => {
       await db.employees.bulkCreate([
         { name: 'John Doe', employee_number: 'EMP001', monthlyConsumptionValue: 1000 },
         { name: 'Jane Smith', employee_number: 'EMP002', monthlyConsumptionValue: 2000 },
@@ -36,6 +62,7 @@ describe('Employees API', () => {
 
       const res = await request(app)
         .get(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.body).to.be.an('array');
@@ -44,10 +71,25 @@ describe('Employees API', () => {
       expect(res.body[0]).to.have.property('employee_number');
       expect(res.body[0]).to.have.property('monthlyConsumptionValue');
     });
+
+    it('should return all employees for manager', async () => {
+      await db.employees.bulkCreate([
+        { name: 'John Doe', employee_number: 'EMP001', monthlyConsumptionValue: 1000 },
+        { name: 'Jane Smith', employee_number: 'EMP002', monthlyConsumptionValue: 2000 },
+      ]);
+
+      const res = await request(app)
+        .get(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${managerToken}`)
+        .expect(200);
+
+      expect(res.body).to.be.an('array');
+      expect(res.body).to.have.lengthOf(2);
+    });
   });
 
   describe(`GET ${API_BASE}/employees/:id`, () => {
-    it('should return a single employee by ID', async () => {
+    it('should return 403 when employee tries to view another employee', async () => {
       const employee = await db.employees.create({
         name: 'Test Employee',
         employee_number: 'EMP100',
@@ -56,6 +98,22 @@ describe('Employees API', () => {
 
       const res = await request(app)
         .get(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(403);
+
+      expect(res.body).to.have.property('success', false);
+    });
+
+    it('should return a single employee by ID for admin', async () => {
+      const employee = await db.employees.create({
+        name: 'Test Employee',
+        employee_number: 'EMP100',
+        monthlyConsumptionValue: 500,
+      });
+
+      const res = await request(app)
+        .get(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.body).to.have.property('id', employee.id);
@@ -64,9 +122,25 @@ describe('Employees API', () => {
       expect(res.body.monthlyConsumptionValue).to.equal(500);
     });
 
+    it('should return a single employee by ID for manager', async () => {
+      const employee = await db.employees.create({
+        name: 'Test Employee',
+        employee_number: 'EMP100',
+        monthlyConsumptionValue: 500,
+      });
+
+      const res = await request(app)
+        .get(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${managerToken}`)
+        .expect(200);
+
+      expect(res.body).to.have.property('id', employee.id);
+    });
+
     it('should return 404 for non-existent employee', async () => {
       const res = await request(app)
         .get(`${API_BASE}/employees/99999`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -75,7 +149,7 @@ describe('Employees API', () => {
   });
 
   describe(`POST ${API_BASE}/employees`, () => {
-    it('should create a new employee with valid data', async () => {
+    it('should return 403 when employee tries to create', async () => {
       const newEmployee = {
         name: 'New Employee',
         employee_number: 'EMP200',
@@ -84,6 +158,39 @@ describe('Employees API', () => {
 
       const res = await request(app)
         .post(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .send(newEmployee)
+        .expect(403);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should return 403 when manager tries to create', async () => {
+      const newEmployee = {
+        name: 'New Employee',
+        employee_number: 'EMP200',
+        monthlyConsumptionValue: 1000,
+      };
+
+      const res = await request(app)
+        .post(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send(newEmployee)
+        .expect(403);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should create a new employee with admin token', async () => {
+      const newEmployee = {
+        name: 'New Employee',
+        employee_number: 'EMP200',
+        monthlyConsumptionValue: 1000,
+      };
+
+      const res = await request(app)
+        .post(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send(newEmployee)
         .expect(201);
 
@@ -92,7 +199,6 @@ describe('Employees API', () => {
       expect(res.body).to.have.property('employee_number', 'EMP200');
       expect(res.body.monthlyConsumptionValue).to.equal(1000);
 
-      
       const dbEmployee = await db.employees.findByPk(res.body.id);
       expect(dbEmployee).to.not.be.null;
     });
@@ -100,6 +206,7 @@ describe('Employees API', () => {
     it('should return 400 for missing required name', async () => {
       const res = await request(app)
         .post(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ employee_number: 'EMP999', monthlyConsumptionValue: 1000 })
         .expect(400);
 
@@ -115,9 +222,10 @@ describe('Employees API', () => {
 
       const res = await request(app)
         .post(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Second Employee',
-          employee_number: 'EMP001', 
+          employee_number: 'EMP001',
           monthlyConsumptionValue: 2000,
         })
         .expect(409);
@@ -128,7 +236,7 @@ describe('Employees API', () => {
   });
 
   describe(`PUT ${API_BASE}/employees/:id`, () => {
-    it('should update an existing employee', async () => {
+    it('should return 403 when employee tries to update', async () => {
       const employee = await db.employees.create({
         name: 'Original Name',
         employee_number: 'EMP300',
@@ -137,6 +245,39 @@ describe('Employees API', () => {
 
       const res = await request(app)
         .put(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .send({ name: 'Updated Name', monthlyConsumptionValue: 200 })
+        .expect(403);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should return 403 when manager tries to update', async () => {
+      const employee = await db.employees.create({
+        name: 'Original Name',
+        employee_number: 'EMP300',
+        monthlyConsumptionValue: 100,
+      });
+
+      const res = await request(app)
+        .put(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send({ name: 'Updated Name', monthlyConsumptionValue: 200 })
+        .expect(403);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should update an existing employee with admin token', async () => {
+      const employee = await db.employees.create({
+        name: 'Original Name',
+        employee_number: 'EMP300',
+        monthlyConsumptionValue: 100,
+      });
+
+      const res = await request(app)
+        .put(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ name: 'Updated Name', monthlyConsumptionValue: 200 })
         .expect(200);
 
@@ -147,6 +288,7 @@ describe('Employees API', () => {
     it('should return 404 when updating non-existent employee', async () => {
       const res = await request(app)
         .put(`${API_BASE}/employees/99999`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ name: 'Ghost', monthlyConsumptionValue: 0 })
         .expect(404);
 
@@ -162,6 +304,7 @@ describe('Employees API', () => {
 
       const res = await request(app)
         .put(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ monthlyConsumptionValue: 500 })
         .expect(200);
 
@@ -171,7 +314,7 @@ describe('Employees API', () => {
   });
 
   describe(`DELETE ${API_BASE}/employees/:id`, () => {
-    it('should delete an existing employee', async () => {
+    it('should return 403 when employee tries to delete', async () => {
       const employee = await db.employees.create({
         name: 'To Delete',
         employee_number: 'EMP500',
@@ -180,6 +323,37 @@ describe('Employees API', () => {
 
       const res = await request(app)
         .delete(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${employeeToken}`)
+        .expect(403);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should return 403 when manager tries to delete', async () => {
+      const employee = await db.employees.create({
+        name: 'To Delete',
+        employee_number: 'EMP500',
+        monthlyConsumptionValue: 100,
+      });
+
+      const res = await request(app)
+        .delete(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${managerToken}`)
+        .expect(403);
+
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should delete an existing employee with admin token', async () => {
+      const employee = await db.employees.create({
+        name: 'To Delete',
+        employee_number: 'EMP500',
+        monthlyConsumptionValue: 100,
+      });
+
+      const res = await request(app)
+        .delete(`${API_BASE}/employees/${employee.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
       expect(res.body).to.have.property('deleted', true);
@@ -191,6 +365,7 @@ describe('Employees API', () => {
     it('should return 404 when deleting non-existent employee', async () => {
       const res = await request(app)
         .delete(`${API_BASE}/employees/99999`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
 
       expect(res.body).to.have.property('success', false);
@@ -201,6 +376,7 @@ describe('Employees API', () => {
     it('should handle zero consumption value', async () => {
       const res = await request(app)
         .post(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Zero Consumption',
           employee_number: 'EMP600',
@@ -214,6 +390,7 @@ describe('Employees API', () => {
     it('should handle large consumption values', async () => {
       const res = await request(app)
         .post(`${API_BASE}/employees`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Big Spender',
           employee_number: 'EMP700',

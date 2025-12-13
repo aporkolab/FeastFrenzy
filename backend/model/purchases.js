@@ -19,6 +19,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
       },
+      userId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+      },
     }, {
       timestamps: false,
     });
@@ -29,6 +37,10 @@ module.exports = (sequelize, DataTypes) => {
     });
     purchases.belongsTo(models.employees, {
       as: 'employee',
+    });
+    purchases.belongsTo(models.users, {
+      as: 'user',
+      foreignKey: 'userId',
     });
   };
 
