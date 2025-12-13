@@ -17,6 +17,7 @@ module.exports = {
     'node_modules/(?!@angular|rxjs|tslib)'
   ],
   moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1',
     '@angular/core/testing': '<rootDir>/node_modules/@angular/core/fesm2022/testing.mjs',
     '@angular/common/http/testing': '<rootDir>/node_modules/@angular/common/fesm2022/http-testing.mjs',
     '@angular/common/http': '<rootDir>/node_modules/@angular/common/fesm2022/http.mjs',

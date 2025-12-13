@@ -5,14 +5,27 @@ import { provideRouter, ActivatedRoute } from '@angular/router';
 import { EmployeeDetailComponent } from './employee-detail.component';
 import { EmployeeService } from '../../service/employee.service';
 import { of } from 'rxjs';
+import { Employee } from '../../model/employee';
 
 describe('EmployeeDetailComponent', () => {
   let component: EmployeeDetailComponent;
   let fixture: ComponentFixture<EmployeeDetailComponent>;
 
   beforeEach(async () => {
-    const employeeSpy = jasmine.createSpyObj('EmployeeService', ['getOne']);
-    employeeSpy.getOne.and.returnValue(of({ id: 1, name: 'Test', email: 'test@test.com', position: 'Dev', department: 'IT', active: true }));
+    const mockEmployee: Employee = { 
+      id: 1, 
+      employee_number: 'EMP001',
+      name: 'Test',
+      monthlyConsumptionValue: 50000
+    };
+    
+    
+    const employeeSpy = {
+      getEmployee: jest.fn().mockReturnValue(of(mockEmployee)),
+      getEmployees: jest.fn().mockReturnValue(of([mockEmployee])),
+      updateEmployee: jest.fn(),
+      deleteEmployee: jest.fn()
+    };
 
     await TestBed.configureTestingModule({
       imports: [EmployeeDetailComponent],
@@ -21,7 +34,13 @@ describe('EmployeeDetailComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: EmployeeService, useValue: employeeSpy },
-        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }), snapshot: { params: { id: 1 } } } }
+        { provide: ActivatedRoute, useValue: { 
+          params: of({ id: 1 }), 
+          snapshot: { 
+            paramMap: { get: (key: string) => '1' },
+            params: { id: 1 } 
+          } 
+        } }
       ]
     }).compileComponents();
 

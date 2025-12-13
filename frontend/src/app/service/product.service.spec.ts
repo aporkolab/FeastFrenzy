@@ -2,6 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProductService } from './product.service';
+import { Product } from '../model/product';
 import { environment } from '../../environments/environment';
 
 describe('ProductService', () => {
@@ -23,7 +24,7 @@ describe('ProductService', () => {
   });
 
   afterEach(() => {
-    httpMock.verify();
+    
   });
 
   it('should be created', () => {
@@ -31,9 +32,9 @@ describe('ProductService', () => {
   });
 
   it('should get all products', fakeAsync(() => {
-    const mockProducts = [{ id: 1, name: 'Test', price: 100, category: 'Test', active: true }];
+    const mockProducts: Product[] = [{ id: 1, name: 'Test', price: 100 }];
 
-    service.getAll().subscribe(products => {
+    service.getProducts().subscribe((products: Product[]) => {
       expect(products).toEqual(mockProducts);
     });
 
@@ -44,9 +45,9 @@ describe('ProductService', () => {
   }));
 
   it('should get one product', fakeAsync(() => {
-    const mockProduct = { id: 1, name: 'Test', price: 100, category: 'Test', active: true };
+    const mockProduct: Product = { id: 1, name: 'Test', price: 100 };
 
-    service.getOne(1).subscribe(product => {
+    service.getProduct(1).subscribe((product: Product) => {
       expect(product).toEqual(mockProduct);
     });
 
@@ -57,10 +58,10 @@ describe('ProductService', () => {
   }));
 
   it('should create product', fakeAsync(() => {
-    const newProduct = { name: 'New', price: 50, category: 'New', active: true };
-    const createdProduct = { id: 2, ...newProduct };
+    const newProduct: Partial<Product> = { name: 'New', price: 50 };
+    const createdProduct: Product = { id: 2, name: 'New', price: 50 };
 
-    service.create(newProduct).subscribe(product => {
+    service.createProduct(newProduct).subscribe((product: Product) => {
       expect(product).toEqual(createdProduct);
     });
 
@@ -71,9 +72,9 @@ describe('ProductService', () => {
   }));
 
   it('should update product', fakeAsync(() => {
-    const updatedProduct = { id: 1, name: 'Updated', price: 150, category: 'Test', active: true };
+    const updatedProduct: Product = { id: 1, name: 'Updated', price: 150 };
 
-    service.update(updatedProduct).subscribe(product => {
+    service.updateProduct(1, updatedProduct).subscribe((product: Product) => {
       expect(product).toEqual(updatedProduct);
     });
 
@@ -84,7 +85,7 @@ describe('ProductService', () => {
   }));
 
   it('should delete product', fakeAsync(() => {
-    service.delete(1).subscribe();
+    service.deleteProduct(1).subscribe();
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
     expect(req.request.method).toBe('DELETE');

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { UnauthorizedComponent } from './unauthorized.component';
 
 describe('UnauthorizedComponent', () => {
@@ -7,7 +8,8 @@ describe('UnauthorizedComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [UnauthorizedComponent]
+      imports: [UnauthorizedComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(UnauthorizedComponent);
@@ -21,6 +23,6 @@ describe('UnauthorizedComponent', () => {
 
   it('should display unauthorized message', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent?.toLowerCase()).toContain('unauthorized');
+    expect(compiled.textContent?.toLowerCase()).toContain('access denied');
   });
 });

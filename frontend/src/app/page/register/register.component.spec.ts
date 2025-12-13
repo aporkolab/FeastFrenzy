@@ -10,16 +10,20 @@ import { of, throwError } from 'rxjs';
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
   let fixture: ComponentFixture<RegisterComponent>;
-  let authService: jasmine.SpyObj<AuthService>;
+  let authSpy: { register: jest.Mock; isAuthenticated: jest.Mock };
   let router: Router;
 
   beforeEach(async () => {
-    const authSpy = jasmine.createSpyObj('AuthService', ['register']);
+    
+    authSpy = {
+      register: jest.fn(),
+      isAuthenticated: jest.fn().mockReturnValue(false)
+    };
 
     await TestBed.configureTestingModule({
       imports: [RegisterComponent, ReactiveFormsModule],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'login', component: RegisterComponent }]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: authSpy }
@@ -28,7 +32,6 @@ describe('RegisterComponent', () => {
 
     fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
     router = TestBed.inject(Router);
     fixture.detectChanges();
   });
@@ -63,27 +66,29 @@ describe('RegisterComponent', () => {
       user: { id: 1, email: 'new@test.com', name: 'New User', role: 'employee' as const },
       tokens: { accessToken: 'token', refreshToken: 'refresh' }
     };
-    authService.register.and.returnValue(of(mockResponse));
+    authSpy.register.mockReturnValue(of(mockResponse));
     jest.spyOn(router, 'navigate');
 
     component.registerForm.setValue({
       name: 'New User',
       email: 'new@test.com',
-      password: 'Password123'
+      password: 'Password123',
+      confirmPassword: 'Password123'
     });
     component.onSubmit();
     tick();
 
-    expect(authService.register).toHaveBeenCalled();
+    expect(authSpy.register).toHaveBeenCalled();
   }));
 
   it('should show error on registration failure', fakeAsync(() => {
-    authService.register.and.returnValue(throwError(() => ({ message: 'Email exists' })));
+    authSpy.register.mockReturnValue(throwError(() => ({ message: 'Email exists' })));
 
     component.registerForm.setValue({
       name: 'Test',
       email: 'exists@test.com',
-      password: 'Password123'
+      password: 'Password123',
+      confirmPassword: 'Password123'
     });
     component.onSubmit();
     tick();

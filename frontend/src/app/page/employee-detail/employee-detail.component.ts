@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { Employee } from 'src/app/model/employee';
-import { EmployeeService } from 'src/app/service/employee.service';
+import { Employee } from '../../model/employee';
+import { EmployeeService } from '../../service/employee.service';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({

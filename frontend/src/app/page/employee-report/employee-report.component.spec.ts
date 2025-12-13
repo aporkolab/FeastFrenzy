@@ -3,23 +3,38 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { EmployeeReportComponent } from './employee-report.component';
+import { EmployeeService } from '../../service/employee.service';
+import { PurchaseService } from '../../service/purchase.service';
+import { of } from 'rxjs';
 
 describe('EmployeeReportComponent', () => {
   let component: EmployeeReportComponent;
   let fixture: ComponentFixture<EmployeeReportComponent>;
 
   beforeEach(async () => {
+    const employeeSpy = {
+      getEmployees: jest.fn().mockReturnValue(of([]))
+    };
+    
+    const purchaseSpy = {
+      getPurchases: jest.fn().mockReturnValue(of([]))
+    };
+
     await TestBed.configureTestingModule({
       imports: [EmployeeReportComponent],
       providers: [
         provideRouter([]),
         provideHttpClient(),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        { provide: EmployeeService, useValue: employeeSpy },
+        { provide: PurchaseService, useValue: purchaseSpy }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(EmployeeReportComponent);
     component = fixture.componentInstance;
+    
+    component.newPrices = { coffee: 0, lunch: 0, snack: 0 };
     fixture.detectChanges();
   });
 

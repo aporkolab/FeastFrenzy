@@ -11,10 +11,12 @@ describe('AdminComponent', () => {
   let fixture: ComponentFixture<AdminComponent>;
 
   beforeEach(async () => {
-    const authSpy = jasmine.createSpyObj('AuthService', ['getCurrentUser', 'hasRole'], {
+    
+    const authSpy = {
+      getCurrentUser: jest.fn(),
+      hasRole: jest.fn().mockReturnValue(true),
       currentUser$: of({ id: 1, email: 'admin@test.com', name: 'Admin', role: 'admin' })
-    });
-    authSpy.hasRole.and.returnValue(true);
+    };
 
     await TestBed.configureTestingModule({
       imports: [AdminComponent],
@@ -37,6 +39,6 @@ describe('AdminComponent', () => {
 
   it('should display admin panel', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Admin');
+    expect(compiled.textContent).toContain('Dolgozó');
   });
 });

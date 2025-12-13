@@ -5,14 +5,27 @@ import { provideRouter } from '@angular/router';
 import { EmployeesComponent } from './employees.component';
 import { EmployeeService } from '../../service/employee.service';
 import { of } from 'rxjs';
+import { Employee } from '../../model/employee';
 
 describe('EmployeesComponent', () => {
   let component: EmployeesComponent;
   let fixture: ComponentFixture<EmployeesComponent>;
 
   beforeEach(async () => {
-    const employeeSpy = jasmine.createSpyObj('EmployeeService', ['getAll']);
-    employeeSpy.getAll.and.returnValue(of([]));
+    const mockEmployees: Employee[] = [{ 
+      id: 1, 
+      employee_number: 'EMP001',
+      name: 'Test',
+      monthlyConsumptionValue: 50000
+    }];
+    
+    
+    const employeeSpy = {
+      getEmployees: jest.fn().mockReturnValue(of(mockEmployees)),
+      getEmployee: jest.fn(),
+      updateEmployee: jest.fn(),
+      deleteEmployee: jest.fn().mockReturnValue(of(void 0))
+    };
 
     await TestBed.configureTestingModule({
       imports: [EmployeesComponent],

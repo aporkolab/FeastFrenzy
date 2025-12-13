@@ -11,11 +11,12 @@ describe('DashboardComponent', () => {
   let fixture: ComponentFixture<DashboardComponent>;
 
   beforeEach(async () => {
-    const authSpy = jasmine.createSpyObj('AuthService', ['getCurrentUser', 'hasRole'], {
+    
+    const authSpy = {
+      getCurrentUser: jest.fn().mockReturnValue({ id: 1, email: 'test@test.com', name: 'Test', role: 'employee' }),
+      hasRole: jest.fn().mockReturnValue(false),
       currentUser$: of({ id: 1, email: 'test@test.com', name: 'Test', role: 'employee' })
-    });
-    authSpy.getCurrentUser.and.returnValue({ id: 1, email: 'test@test.com', name: 'Test', role: 'employee' });
-    authSpy.hasRole.and.returnValue(false);
+    };
 
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
@@ -38,6 +39,6 @@ describe('DashboardComponent', () => {
 
   it('should display welcome message', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Dashboard');
+    expect(compiled.textContent).toContain('Welcome');
   });
 });

@@ -5,14 +5,23 @@ import { provideRouter } from '@angular/router';
 import { ProductsComponent } from './products.component';
 import { ProductService } from '../../service/product.service';
 import { of } from 'rxjs';
+import { Product } from '../../model/product';
 
 describe('ProductsComponent', () => {
   let component: ProductsComponent;
   let fixture: ComponentFixture<ProductsComponent>;
 
   beforeEach(async () => {
-    const productSpy = jasmine.createSpyObj('ProductService', ['getAll']);
-    productSpy.getAll.and.returnValue(of([]));
+    const mockProducts: Product[] = [{ id: 1, name: 'Test', price: 100 }];
+    
+    
+    const productSpy = {
+      getProducts: jest.fn().mockReturnValue(of(mockProducts)),
+      getProduct: jest.fn(),
+      createProduct: jest.fn(),
+      updateProduct: jest.fn(),
+      deleteProduct: jest.fn().mockReturnValue(of(void 0))
+    };
 
     await TestBed.configureTestingModule({
       imports: [ProductsComponent],

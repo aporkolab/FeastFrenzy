@@ -10,17 +10,20 @@ import { of, throwError } from 'rxjs';
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
-  let authService: jasmine.SpyObj<AuthService>;
+  let authSpy: { login: jest.Mock; isAuthenticated: jest.Mock };
   let router: Router;
 
   beforeEach(async () => {
-    const authSpy = jasmine.createSpyObj('AuthService', ['login', 'isAuthenticated']);
-    authSpy.isAuthenticated.and.returnValue(false);
+    
+    authSpy = {
+      login: jest.fn(),
+      isAuthenticated: jest.fn().mockReturnValue(false)
+    };
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent, ReactiveFormsModule],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'dashboard', component: LoginComponent }]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: authSpy }
@@ -29,7 +32,6 @@ describe('LoginComponent', () => {
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
     router = TestBed.inject(Router);
     fixture.detectChanges();
   });
@@ -64,20 +66,20 @@ describe('LoginComponent', () => {
       user: { id: 1, email: 'test@test.com', name: 'Test', role: 'employee' as const },
       tokens: { accessToken: 'token', refreshToken: 'refresh' }
     };
-    authService.login.and.returnValue(of(mockResponse));
+    authSpy.login.mockReturnValue(of(mockResponse));
     jest.spyOn(router, 'navigate');
 
-    component.loginForm.setValue({ email: 'test@test.com', password: 'password123' });
+    component.loginForm.setValue({ email: 'test@test.com', password: 'password123', rememberMe: false });
     component.onSubmit();
     tick();
 
-    expect(authService.login).toHaveBeenCalledWith({ email: 'test@test.com', password: 'password123' });
+    expect(authSpy.login).toHaveBeenCalledWith({ email: 'test@test.com', password: 'password123' });
   }));
 
   it('should display error message on login failure', fakeAsync(() => {
-    authService.login.and.returnValue(throwError(() => ({ message: 'Invalid credentials' })));
+    authSpy.login.mockReturnValue(throwError(() => ({ message: 'Invalid credentials' })));
 
-    component.loginForm.setValue({ email: 'test@test.com', password: 'wrongpass' });
+    component.loginForm.setValue({ email: 'test@test.com', password: 'wrongpass', rememberMe: false });
     component.onSubmit();
     tick();
 
@@ -86,6 +88,6 @@ describe('LoginComponent', () => {
 
   it('should not submit if form is invalid', () => {
     component.onSubmit();
-    expect(authService.login).not.toHaveBeenCalled();
+    expect(authSpy.login).not.toHaveBeenCalled();
   });
 });

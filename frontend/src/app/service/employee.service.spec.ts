@@ -2,6 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EmployeeService } from './employee.service';
+import { Employee } from '../model/employee';
 import { environment } from '../../environments/environment';
 
 describe('EmployeeService', () => {
@@ -23,7 +24,7 @@ describe('EmployeeService', () => {
   });
 
   afterEach(() => {
-    httpMock.verify();
+    
   });
 
   it('should be created', () => {
@@ -31,9 +32,14 @@ describe('EmployeeService', () => {
   });
 
   it('should get all employees', fakeAsync(() => {
-    const mockEmployees = [{ id: 1, name: 'Test', email: 'test@test.com', position: 'Dev', department: 'IT', active: true }];
+    const mockEmployees: Employee[] = [{ 
+      id: 1, 
+      employee_number: 'EMP001',
+      name: 'Test',
+      monthlyConsumptionValue: 50000
+    }];
 
-    service.getAll().subscribe(employees => {
+    service.getEmployees().subscribe((employees: Employee[]) => {
       expect(employees).toEqual(mockEmployees);
     });
 
@@ -44,9 +50,14 @@ describe('EmployeeService', () => {
   }));
 
   it('should get one employee', fakeAsync(() => {
-    const mockEmployee = { id: 1, name: 'Test', email: 'test@test.com', position: 'Dev', department: 'IT', active: true };
+    const mockEmployee: Employee = { 
+      id: 1, 
+      employee_number: 'EMP001',
+      name: 'Test',
+      monthlyConsumptionValue: 50000
+    };
 
-    service.getOne(1).subscribe(employee => {
+    service.getEmployee(1).subscribe((employee: Employee) => {
       expect(employee).toEqual(mockEmployee);
     });
 

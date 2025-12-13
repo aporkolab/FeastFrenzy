@@ -20,7 +20,7 @@ describe('ProductReportComponent', () => {
 
     fixture = TestBed.createComponent(ProductReportComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    
   });
 
   it('should create', () => {

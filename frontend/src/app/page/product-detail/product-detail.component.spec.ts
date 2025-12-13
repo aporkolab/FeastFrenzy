@@ -5,14 +5,22 @@ import { provideRouter, ActivatedRoute } from '@angular/router';
 import { ProductDetailComponent } from './product-detail.component';
 import { ProductService } from '../../service/product.service';
 import { of } from 'rxjs';
+import { Product } from '../../model/product';
 
 describe('ProductDetailComponent', () => {
   let component: ProductDetailComponent;
   let fixture: ComponentFixture<ProductDetailComponent>;
 
   beforeEach(async () => {
-    const productSpy = jasmine.createSpyObj('ProductService', ['getOne']);
-    productSpy.getOne.and.returnValue(of({ id: 1, name: 'Test', price: 100, category: 'Test', active: true }));
+    const mockProduct: Product = { id: 1, name: 'Test', price: 100 };
+    
+    
+    const productSpy = {
+      getProduct: jest.fn().mockReturnValue(of(mockProduct)),
+      getProducts: jest.fn().mockReturnValue(of([mockProduct])),
+      updateProduct: jest.fn(),
+      deleteProduct: jest.fn()
+    };
 
     await TestBed.configureTestingModule({
       imports: [ProductDetailComponent],
@@ -21,7 +29,13 @@ describe('ProductDetailComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ProductService, useValue: productSpy },
-        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }), snapshot: { params: { id: 1 } } } }
+        { provide: ActivatedRoute, useValue: { 
+          params: of({ id: 1 }), 
+          snapshot: { 
+            paramMap: { get: (key: string) => '1' },
+            params: { id: 1 } 
+          } 
+        } }
       ]
     }).compileComponents();
 
