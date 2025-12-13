@@ -1,41 +1,90 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Product } from '../model/product';
-import { Observable } from 'rxjs';
+import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { catchError, tap, retry } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
+  private readonly apiUrl = `${environment.apiUrl}/products`;
 
-  private productUrl = ' http://localhost:3000/products';
-  products: Product[] = [];
-  selectedMonth!: string;
+  private productsSubject = new BehaviorSubject<Product[]>([]);
+  public products$ = this.productsSubject.asObservable();
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
+  
   getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(this.productUrl);
+    return this.http.get<Product[]>(this.apiUrl).pipe(
+      retry(environment.retryAttempts),
+      tap(products => this.productsSubject.next(products)),
+      catchError(this.handleError)
+    );
   }
 
+  
   getProduct(id: number): Observable<Product> {
-    const url = `${this.productUrl}/${id}`;
-    return this.http.get<Product>(url);
+    return this.http.get<Product>(`${this.apiUrl}/${id}`).pipe(
+      retry(environment.retryAttempts),
+      catchError(this.handleError)
+    );
   }
 
-  updateProduct(product: Product): Observable<Product> {
-    return this.http.put<Product>(this.productUrl, product);
+  
+  createProduct(product: Partial<Product>): Observable<Product> {
+    return this.http.post<Product>(this.apiUrl, product).pipe(
+      tap(() => this.refreshProducts()),
+      catchError(this.handleError)
+    );
   }
 
-  getProductReport(month: string) {
-    this.http.get<Product[]>(`/products?month=${month}`).subscribe(data => {
-      this.products = data;
-    });
+  
+  updateProduct(id: number, product: Partial<Product>): Observable<Product> {
+    return this.http.put<Product>(`${this.apiUrl}/${id}`, product).pipe(
+      tap(() => this.refreshProducts()),
+      catchError(this.handleError)
+    );
   }
 
+  
+  deleteProduct(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => this.refreshProducts()),
+      catchError(this.handleError)
+    );
+  }
 
-  deleteProduct(id: number): Observable<Product> {
-    const url = `${this.productUrl}/${id}`;
-    return this.http.delete<Product>(url);
+  
+  getProductReport(month: string): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.apiUrl}?month=${month}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  
+  private refreshProducts(): void {
+    this.getProducts().subscribe();
+  }
+
+  
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let errorMessage = 'An unknown error occurred';
+
+    if (error.error instanceof ErrorEvent) {
+      
+      errorMessage = `Client error: ${error.error.message}`;
+    } else {
+      
+      errorMessage = error.error?.error?.message || `Server error: ${error.status} - ${error.statusText}`;
+    }
+
+    if (environment.enableLogging) {
+      console.error('ProductService Error:', errorMessage, error);
+    }
+
+    return throwError(() => new Error(errorMessage));
   }
 }

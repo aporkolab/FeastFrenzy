@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { Product } from 'src/app/model/product';
 import { ProductService } from 'src/app/service/product.service';
-
 
 @Component({
   selector: 'app-products',
@@ -12,23 +12,60 @@ import { ProductService } from 'src/app/service/product.service';
   standalone: true,
   imports: [CommonModule, FormsModule]
 })
-export class ProductsComponent implements OnInit {
-
+export class ProductsComponent implements OnInit, OnDestroy {
   products: Product[] = [];
+  isLoading = false;
+  error: string | null = null;
 
-  constructor(private productService: ProductService) { }
+  private destroy$ = new Subject<void>();
 
-  ngOnInit() {
-    this.getProducts();
+  constructor(private productService: ProductService) {}
+
+  ngOnInit(): void {
+    this.loadProducts();
   }
 
-  getProducts(): void {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadProducts(): void {
+    this.isLoading = true;
+    this.error = null;
+
     this.productService.getProducts()
-      .subscribe(products => this.products = products);
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (products) => {
+          this.products = products;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.error = err.message || 'Failed to load products';
+          this.isLoading = false;
+        }
+      });
   }
 
   deleteProduct(product: Product): void {
-    this.products = this.products.filter(p => p !== product);
-    this.productService.deleteProduct(product.id).subscribe();
+    if (!confirm(`Are you sure you want to delete "${product.name}"?`)) {
+      return;
+    }
+
+    this.productService.deleteProduct(product.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.products = this.products.filter(p => p.id !== product.id);
+        },
+        error: (err) => {
+          this.error = err.message || 'Failed to delete product';
+        }
+      });
+  }
+
+  trackByProductId(index: number, product: Product): number {
+    return product.id;
   }
 }

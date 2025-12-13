@@ -17,11 +17,11 @@ describe('PurchaseDetailComponent', () => {
     fixture = TestBed.createComponent(PurchaseDetailComponent);
     component = fixture.componentInstance;
     
-    // Add mock purchase data to prevent undefined property access
+    
     component.purchase = {
       id: 1,
       employeeId: 1,
-      date: new Date(),
+      date: new Date().toISOString(),
       total: 100,
       closed: false,
       purchaseItems: []

@@ -1,60 +1,69 @@
-const express = require('express');
-const baseService = require('../base/service');
-const createError = require('http-errors');
+const baseService = require('./service');
 
-module.exports = (model, populateList = []) => {
-  const service = baseService(model, populateList);
+
+module.exports = (model, includeList = []) => {
+  const service = baseService(model, includeList);
+
   return {
-    findAll(req, res, next) {
-      return service.findAll()
-        .then(list => res.json(list));
+    
+    async findAll(req, res, next) {
+      try {
+        const entities = await service.findAll();
+        res.status(200).json(entities);
+      } catch (error) {
+        next(error);
+      }
     },
-    findOne(req, res, next) {
-      return service.findOne(req.params.id)
-        .then(entity => {
-          // if (!entity) {
-          // 	return next(new createError.NotFound("Entity has not found"));
-          // }
-          return res.json(entity);
-        });
-    },
-    findRandom(req, res, next) {
-      return service.findRandom()
-        .then(entity => {
-          // if (!entity) {
-          // 	return next(new createError.NotFound("Entity has not found"));
-          // }
-          return res.json(entity);
-        });
-    },
-    update(req, res, next) {
-      return service.update(req.params.id, req.body)
-        .then(entity => res.json(entity))
-        .catch(err => {
-          res.statusCode = 501;
-          res.json(err);
-        });
-    },
-    create(req, res, next) {
-      return service.create(req.body)
-        .then(entity => res.json(entity))
-        .catch(err => {
-          res.statusCode = 501;
-          res.json(err);
-        });
-    },
-    delete(req, res, next) {
-      return service.delete(req.params.id)
-        .then(() => res.json({}))
-        .catch(err => {
 
-          if (err.message === 'Not found') {
-            return next(
-              new createError.NotFound(err.message),
-            );
-          }
-          next(new createError.InternalServerError(err.message));
-        });
+    
+    async findOne(req, res, next) {
+      try {
+        const entity = await service.findOne(req.params.id);
+        res.status(200).json(entity);
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    
+    async findRandom(req, res, next) {
+      try {
+        const limit = parseInt(req.query.limit, 10) || 6;
+        const entities = await service.findRandom(limit);
+        res.status(200).json(entities);
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    
+    async update(req, res, next) {
+      try {
+        const entity = await service.update(req.params.id, req.body);
+        res.status(200).json(entity);
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    
+    async create(req, res, next) {
+      try {
+        const entity = await service.create(req.body);
+        res.status(201).json(entity);
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    
+    async delete(req, res, next) {
+      try {
+        const result = await service.delete(req.params.id);
+        res.status(200).json(result);
+      } catch (error) {
+        next(error);
+      }
     },
   };
 };

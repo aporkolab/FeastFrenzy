@@ -1,36 +1,59 @@
-<table>
-	<tr>
-		<th>Employee ID</th>
-		<th>Product ID</th>
-		<!-- <th>Quantity</th> -->
-		<th>Price</th>
-		<th>Date</th>
-		<th>Actions</th>
-	</tr>
-	<tr *ngFor="let purchase of purchases">
-		<td>{{ purchase.employeeId }}</td>
-		<td>{{ purchase.purchaseItems }}</td>
-		<!-- <td>{{ purchase.quantity }}</td> -->
-		<td>{{ purchase.total }}</td>
-		<td>{{ purchase.date }}</td>
-		<td>
-			<button (click)="editPurchase(purchase)">Edit</button>
-			<button (click)="deletePurchase(purchase)">Delete</button>
-		</td>
-	</tr>
-</table>
-<form (ngSubmit)="addPurchase()">
-	<label>
-		Employee:
-		<input type="text" [(ngModel)]="newPurchase.employeeId" name="employeeId">
-	</label>
-	<label>
-		Product:
-		<input type="text" [(ngModel)]="newPurchase.purchaseItems" name="purchaseItems">
-	</label>
-	<!-- <label>
-		Quantity:
-		<input type="number" [(ngModel)]="newPurchase.quantity" name="quantity">
-	</label> -->
-	<input type="submit" value="Add Purchase">
-</form>
+<div class="purchases-container">
+	<div *ngIf="error" class="error-message">
+		{{ error }}
+		<button (click)="error = null">Dismiss</button>
+	</div>
+
+	<div *ngIf="isLoading" class="loading">Loading purchases...</div>
+
+	<table *ngIf="!isLoading">
+		<thead>
+			<tr>
+				<th>Employee ID</th>
+				<th>Total</th>
+				<th>Date</th>
+				<th>Status</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let purchase of purchases; trackBy: trackByPurchaseId">
+				<td>{{ purchase.employeeId }}</td>
+				<td>{{ purchase.total | currency }}</td>
+				<td>{{ purchase.date | date:'short' }}</td>
+				<td>{{ purchase.closed ? 'Closed' : 'Open' }}</td>
+				<td>
+					<button (click)="editPurchase(purchase)">Edit</button>
+					<button (click)="deletePurchase(purchase)">Delete</button>
+				</td>
+			</tr>
+			<tr *ngIf="purchases.length === 0">
+				<td colspan="5">No purchases found</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<form (ngSubmit)="addPurchase()" class="purchase-form">
+		<h3>{{ editingPurchase ? 'Edit Purchase' : 'Add Purchase' }}</h3>
+		<label>
+			Employee ID:
+			<input type="number" [(ngModel)]="formData.employeeId" name="employeeId" required>
+		</label>
+		<label>
+			Date:
+			<input type="date" [(ngModel)]="formData.date" name="date" required>
+		</label>
+		<label>
+			Total:
+			<input type="number" [(ngModel)]="formData.total" name="total" step="0.01" min="0">
+		</label>
+		<label>
+			<input type="checkbox" [(ngModel)]="formData.closed" name="closed">
+			Closed
+		</label>
+		<div class="form-actions">
+			<button type="submit">{{ editingPurchase ? 'Update' : 'Add' }} Purchase</button>
+			<button type="button" *ngIf="editingPurchase" (click)="cancelEdit()">Cancel</button>
+		</div>
+	</form>
+</div>

@@ -1,10 +1,22 @@
-import { Purchase } from "./purchase";
 
-export class PurchaseItem {
-	id!: number;
-	productId!: number;
-	purchaseId!: number;
-	quantity!: number;
-	purchase!: Purchase;
-	price: any;
+export interface PurchaseItem {
+  id: number;
+  productId: number;
+  purchaseId: number;
+  quantity: number;
+  price: number;
+}
+
+
+export interface CreatePurchaseItemDto {
+  productId: number;
+  purchaseId: number;
+  quantity: number;
+  price: number;
+}
+
+
+export interface UpdatePurchaseItemDto {
+  quantity?: number;
+  price?: number;
 }
