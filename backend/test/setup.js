@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
 const { expect } = require('chai');
 
-// Test database configuration
+
 const testConfig = {
   dialect: 'sqlite',
   storage: ':memory:',
@@ -13,24 +13,24 @@ const testConfig = {
   },
 };
 
-// Global test variables
+
 global.testDb = null;
 global.app = null;
 global.request = null;
 
-// Setup before all tests
+
 before(async () => {
-  // Set test environment
+  
   process.env.NODE_ENV = 'test';
-  process.env.JWT_SECRET = 'test-jwt-secret-key';
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-at-least-32-chars-long';
   process.env.DB_LOGGING = 'false';
 
-  // Initialize test database
+  
   global.testDb = new Sequelize(testConfig);
 
-  // Import and initialize models
+  
   try {
-    // const models = require('../models'); // Will be implemented when models are available
+    
     await global.testDb.sync({ force: true });
     console.log('✅ Test database synchronized');
   } catch (error) {
@@ -38,7 +38,7 @@ before(async () => {
     throw error;
   }
 
-  // Initialize app for API testing
+  
   try {
     global.app = require('../server');
     global.request = require('supertest')(global.app);
@@ -48,7 +48,7 @@ before(async () => {
   }
 });
 
-// Cleanup after all tests
+
 after(async () => {
   if (global.testDb) {
     await global.testDb.close();
@@ -56,7 +56,7 @@ after(async () => {
   }
 });
 
-// Reset database before each test
+
 beforeEach(async () => {
   if (global.testDb) {
     try {
@@ -67,9 +67,9 @@ beforeEach(async () => {
   }
 });
 
-// Test utilities
+
 global.testUtils = {
-  // Create test user
+  
   createTestUser: async (overrides = {}) => {
     const userData = {
       name: 'Test User',
@@ -80,8 +80,8 @@ global.testUtils = {
     };
 
     try {
-      // const { Employee } = require('../models'); // Will be implemented when models are available
-      // return await Employee.create(userData);
+      
+      
       console.warn('⚠️  Test user creation skipped: models not available');
       return userData;
     } catch (error) {
@@ -90,7 +90,7 @@ global.testUtils = {
     }
   },
 
-  // Create test product
+  
   createTestProduct: async (overrides = {}) => {
     const productData = {
       name: 'Test Product',
@@ -102,8 +102,8 @@ global.testUtils = {
     };
 
     try {
-      // const { Product } = require('../models'); // Will be implemented when models are available
-      // return await Product.create(productData);
+      
+      
       console.warn('⚠️  Test product creation skipped: models not available');
       return productData;
     } catch (error) {
@@ -112,7 +112,7 @@ global.testUtils = {
     }
   },
 
-  // Create test purchase
+  
   createTestPurchase: async (employeeId, _items = [], overrides = {}) => {
     const purchaseData = {
       employeeId,
@@ -123,8 +123,8 @@ global.testUtils = {
     };
 
     try {
-      // const { Purchase } = require('../models'); // Will be implemented when models are available
-      // return await Purchase.create(purchaseData);
+      
+      
       console.warn('⚠️  Test purchase creation skipped: models not available');
       return purchaseData;
     } catch (error) {
@@ -133,7 +133,7 @@ global.testUtils = {
     }
   },
 
-  // Generate JWT token for testing
+  
   generateTestToken: (payload = {}) => {
     const jwt = require('jsonwebtoken');
     const defaultPayload = {
@@ -145,10 +145,10 @@ global.testUtils = {
     return jwt.sign(defaultPayload, process.env.JWT_SECRET, { expiresIn: '1h' });
   },
 
-  // Wait for async operations
+  
   delay: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
 
-  // Generate random data
+  
   randomString: (length = 10) => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
@@ -162,7 +162,7 @@ global.testUtils = {
   randomPrice: () => Math.round((Math.random() * 100) * 100) / 100,
 };
 
-// Test utilities - custom assertions using Chai
+
 global.customAssertions = {
   isValidDate: (received) => {
     expect(received).to.be.an.instanceOf(Date);
@@ -181,10 +181,10 @@ global.customAssertions = {
   },
 };
 
-// Make expect globally available
+
 global.expect = expect;
 
-// Global error handler for unhandled rejections in tests
+
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });

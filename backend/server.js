@@ -31,6 +31,10 @@ app.use(express.static('public'));
 
 const API_V1_PREFIX = '/api/v1';
 
+
+app.use(`${API_V1_PREFIX}/auth`, require('./controller/auth/router'));
+
+
 app.use(`${API_V1_PREFIX}/employees`, require('./controller/employee/router'));
 app.use(`${API_V1_PREFIX}/products`, require('./controller/product/router'));
 app.use(`${API_V1_PREFIX}/purchases`, require('./controller/purchase/router'));

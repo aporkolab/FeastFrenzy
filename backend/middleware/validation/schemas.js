@@ -3,6 +3,78 @@ const Joi = require('joi');
 
 
 
+
+
+const passwordPattern = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+const authSchemas = {
+  register: Joi.object({
+    name: Joi.string().trim().min(1).max(255).required().messages({
+      'string.empty': 'Name is required',
+      'string.max': 'Name cannot exceed 255 characters',
+      'any.required': 'Name is required',
+    }),
+    email: Joi.string().trim().email().max(255).required().messages({
+      'string.empty': 'Email is required',
+      'string.email': 'Invalid email format',
+      'string.max': 'Email cannot exceed 255 characters',
+      'any.required': 'Email is required',
+    }),
+    password: Joi.string().min(8).max(128).pattern(passwordPattern).required().messages({
+      'string.empty': 'Password is required',
+      'string.min': 'Password must be at least 8 characters',
+      'string.max': 'Password cannot exceed 128 characters',
+      'string.pattern.base': 'Password must contain at least one uppercase letter and one number',
+      'any.required': 'Password is required',
+    }),
+  }),
+
+  login: Joi.object({
+    email: Joi.string().trim().email().required().messages({
+      'string.empty': 'Email is required',
+      'string.email': 'Invalid email format',
+      'any.required': 'Email is required',
+    }),
+    password: Joi.string().required().messages({
+      'string.empty': 'Password is required',
+      'any.required': 'Password is required',
+    }),
+  }),
+
+  refreshToken: Joi.object({
+    refreshToken: Joi.string().required().messages({
+      'string.empty': 'Refresh token is required',
+      'any.required': 'Refresh token is required',
+    }),
+  }),
+
+  forgotPassword: Joi.object({
+    email: Joi.string().trim().email().required().messages({
+      'string.empty': 'Email is required',
+      'string.email': 'Invalid email format',
+      'any.required': 'Email is required',
+    }),
+  }),
+
+  resetPassword: Joi.object({
+    token: Joi.string().required().messages({
+      'string.empty': 'Reset token is required',
+      'any.required': 'Reset token is required',
+    }),
+    newPassword: Joi.string().min(8).max(128).pattern(passwordPattern).required().messages({
+      'string.empty': 'New password is required',
+      'string.min': 'Password must be at least 8 characters',
+      'string.max': 'Password cannot exceed 128 characters',
+      'string.pattern.base': 'Password must contain at least one uppercase letter and one number',
+      'any.required': 'New password is required',
+    }),
+  }),
+};
+
+
+
+
+
 const patterns = {
   id: Joi.number().integer().positive(),
   price: Joi.number().precision(2).min(0).max(999999.99),
@@ -133,6 +205,7 @@ const idParamSchema = Joi.object({
 });
 
 module.exports = {
+  authSchemas,
   employeeSchemas,
   productSchemas,
   purchaseSchemas,
