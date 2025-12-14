@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { ToastService, ToastType, Toast } from './toast.service';
 
 describe('ToastService', () => {
@@ -7,9 +7,7 @@ describe('ToastService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(ToastService);
-  });
-
-  afterEach(() => {
+    // Clear any existing toasts
     service.dismissAll();
   });
 
@@ -18,16 +16,18 @@ describe('ToastService', () => {
   });
 
   describe('success', () => {
-    it('should add a success toast', (done) => {
+    it('should add a success toast', fakeAsync(() => {
       service.success('Test success message');
       
-      service.toasts$.subscribe(toasts => {
-        expect(toasts.length).toBe(1);
-        expect(toasts[0].type).toBe('success');
-        expect(toasts[0].message).toBe('Test success message');
-        done();
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(1);
+      expect(toasts[0].type).toBe('success');
+      expect(toasts[0].message).toBe('Test success message');
+      
+      discardPeriodicTasks();
+    }));
 
     it('should use default duration of 3000ms', fakeAsync(() => {
       service.success('Test message');
@@ -43,16 +43,18 @@ describe('ToastService', () => {
   });
 
   describe('error', () => {
-    it('should add an error toast', (done) => {
+    it('should add an error toast', fakeAsync(() => {
       service.error('Test error message');
       
-      service.toasts$.subscribe(toasts => {
-        expect(toasts.length).toBe(1);
-        expect(toasts[0].type).toBe('error');
-        expect(toasts[0].message).toBe('Test error message');
-        done();
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(1);
+      expect(toasts[0].type).toBe('error');
+      expect(toasts[0].message).toBe('Test error message');
+      
+      discardPeriodicTasks();
+    }));
 
     it('should use default duration of 5000ms', fakeAsync(() => {
       service.error('Test message');
@@ -71,29 +73,33 @@ describe('ToastService', () => {
   });
 
   describe('warning', () => {
-    it('should add a warning toast', (done) => {
+    it('should add a warning toast', fakeAsync(() => {
       service.warning('Test warning message');
       
-      service.toasts$.subscribe(toasts => {
-        expect(toasts.length).toBe(1);
-        expect(toasts[0].type).toBe('warning');
-        expect(toasts[0].message).toBe('Test warning message');
-        done();
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(1);
+      expect(toasts[0].type).toBe('warning');
+      expect(toasts[0].message).toBe('Test warning message');
+      
+      discardPeriodicTasks();
+    }));
   });
 
   describe('info', () => {
-    it('should add an info toast', (done) => {
+    it('should add an info toast', fakeAsync(() => {
       service.info('Test info message');
       
-      service.toasts$.subscribe(toasts => {
-        expect(toasts.length).toBe(1);
-        expect(toasts[0].type).toBe('info');
-        expect(toasts[0].message).toBe('Test info message');
-        done();
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(1);
+      expect(toasts[0].type).toBe('info');
+      expect(toasts[0].message).toBe('Test info message');
+      
+      discardPeriodicTasks();
+    }));
   });
 
   describe('custom duration', () => {
@@ -114,66 +120,65 @@ describe('ToastService', () => {
   });
 
   describe('dismiss', () => {
-    it('should dismiss a toast by ID', (done) => {
+    it('should dismiss a toast by ID', fakeAsync(() => {
       service.success('Test message');
       
-      let toastId: string;
-      service.toasts$.subscribe(toasts => {
-        if (toasts.length === 1 && !toastId) {
-          toastId = toasts[0].id;
-          service.dismiss(toastId);
-        } else if (toastId && toasts.length === 0) {
-          expect(toasts.length).toBe(0);
-          done();
-        }
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(1);
+      const toastId = toasts[0].id;
+      
+      service.dismiss(toastId);
+      
+      expect(toasts.length).toBe(0);
+    }));
   });
 
   describe('dismissAll', () => {
-    it('should dismiss all toasts', (done) => {
+    it('should dismiss all toasts', fakeAsync(() => {
       service.success('Message 1');
       service.error('Message 2');
       service.warning('Message 3');
       
-      let callCount = 0;
-      service.toasts$.subscribe(toasts => {
-        callCount++;
-        if (callCount === 3) {
-          expect(toasts.length).toBe(3);
-          service.dismissAll();
-        } else if (callCount === 4) {
-          expect(toasts.length).toBe(0);
-          done();
-        }
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(3);
+      
+      service.dismissAll();
+      
+      expect(toasts.length).toBe(0);
+    }));
   });
 
   describe('max toasts limit', () => {
-    it('should limit toasts to 5', (done) => {
+    it('should limit toasts to 5', fakeAsync(() => {
       for (let i = 0; i < 7; i++) {
         service.info(`Message ${i}`);
       }
       
-      service.toasts$.subscribe(toasts => {
-        expect(toasts.length).toBeLessThanOrEqual(5);
-        done();
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(5);
+      
+      discardPeriodicTasks();
+    }));
   });
 
   describe('unique IDs', () => {
-    it('should generate unique IDs for each toast', (done) => {
+    it('should generate unique IDs for each toast', fakeAsync(() => {
       service.success('Message 1');
       service.success('Message 2');
       
-      service.toasts$.subscribe(toasts => {
-        if (toasts.length === 2) {
-          expect(toasts[0].id).not.toBe(toasts[1].id);
-          done();
-        }
-      });
-    });
+      let toasts: Toast[] = [];
+      service.toasts$.subscribe(t => toasts = t);
+      
+      expect(toasts.length).toBe(2);
+      expect(toasts[0].id).not.toBe(toasts[1].id);
+      
+      discardPeriodicTasks();
+    }));
   });
 });

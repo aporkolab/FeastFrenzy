@@ -16,7 +16,7 @@ describe('EmployeeReportComponent', () => {
       getEmployees: jest.fn().mockReturnValue(of([])),
       getAllEmployees: jest.fn().mockReturnValue(of([]))
     };
-    
+
     const purchaseSpy = {
       getPurchases: jest.fn().mockReturnValue(of([])),
       getAllPurchases: jest.fn().mockReturnValue(of([]))
@@ -35,8 +35,6 @@ describe('EmployeeReportComponent', () => {
 
     fixture = TestBed.createComponent(EmployeeReportComponent);
     component = fixture.componentInstance;
-    
-    component.newPrices = { coffee: 0, lunch: 0, snack: 0 };
     fixture.detectChanges();
   });
 
