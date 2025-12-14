@@ -14,8 +14,17 @@ const {
   paginatedResponse,
   buildQueryOptions,
 } = require('../../utils/queryHelpers');
+const {
+  auditCreate,
+  auditUpdate,
+  auditDelete,
+  createModelGetter,
+} = require('../../middleware/audit');
 
 const controller = require('../base/controller')(products);
+
+// Getter for fetching product before update/delete (for audit logging)
+const getProduct = createModelGetter(products);
 
 const FILTER_CONFIG = {
   name: {
@@ -107,6 +116,7 @@ router.post(
   authenticate,
   authorize('admin', 'manager'),
   validateBody(productSchemas.create),
+  auditCreate('product'),
   (req, res, next) => controller.create(req, res, next)
 );
 
@@ -312,6 +322,7 @@ router.put(
   authorize('admin', 'manager'),
   validateParams(idParamSchema),
   validateBody(productSchemas.update),
+  auditUpdate('product', getProduct),
   (req, res, next) => controller.update(req, res, next)
 );
 
@@ -378,6 +389,7 @@ router.patch(
   authorize('admin', 'manager'),
   validateParams(idParamSchema),
   validateBody(productSchemas.update),
+  auditUpdate('product', getProduct),
   (req, res, next) => controller.update(req, res, next)
 );
 
@@ -431,6 +443,7 @@ router.delete(
   authenticate,
   authorize('admin'),
   validateParams(idParamSchema),
+  auditDelete('product', getProduct),
   (req, res, next) => controller.delete(req, res, next)
 );
 

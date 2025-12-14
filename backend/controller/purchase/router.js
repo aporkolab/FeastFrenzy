@@ -14,6 +14,12 @@ const {
 } = require('../../middleware/ownership');
 const { paginate } = require('../../middleware/pagination');
 const {
+  auditCreate,
+  auditUpdate,
+  auditDelete,
+  createModelGetter,
+} = require('../../middleware/audit');
+const {
   parseSort,
   parseFilters,
   paginatedResponse,
@@ -21,6 +27,7 @@ const {
 } = require('../../utils/queryHelpers');
 
 const baseController = require('../base/controller')(purchases);
+const getPurchase = createModelGetter(purchases);
 
 const FILTER_CONFIG = {
   employeeId: {
@@ -138,6 +145,7 @@ router.post(
   '/',
   authenticate,
   validateBody(purchaseSchemas.create),
+  auditCreate('purchase'),
   purchaseController.create
 );
 
@@ -378,6 +386,7 @@ router.put(
   validateParams(idParamSchema),
   checkOwnership('purchase'),
   validateBody(purchaseSchemas.update),
+  auditUpdate('purchase', getPurchase),
   (req, res, next) => baseController.update(req, res, next)
 );
 
@@ -444,6 +453,7 @@ router.patch(
   validateParams(idParamSchema),
   checkOwnership('purchase'),
   validateBody(purchaseSchemas.update),
+  auditUpdate('purchase', getPurchase),
   (req, res, next) => baseController.update(req, res, next)
 );
 
@@ -497,6 +507,7 @@ router.delete(
   authenticate,
   authorize('admin', 'manager'),
   validateParams(idParamSchema),
+  auditDelete('purchase', getPurchase),
   (req, res, next) => baseController.delete(req, res, next)
 );
 

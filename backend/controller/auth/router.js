@@ -7,6 +7,7 @@ const db = require('../../model');
 const { validateBody } = require('../../middleware/validation');
 const { authSchemas } = require('../../middleware/validation/schemas');
 const { authenticate } = require('../../middleware/auth');
+const { logAuthEvent } = require('../../middleware/audit');
 
 const JWT_SECRET =
   process.env.JWT_SECRET || 'fallback-secret-change-in-production';
@@ -171,12 +172,25 @@ router.post(
       const invalidCredentialsError = createError(401, 'Invalid credentials');
 
       if (!user) {
+        // Log failed login - user not found
+        await logAuthEvent('LOGIN_FAILED', {
+          email,
+          req,
+          metadata: { reason: 'User not found' },
+        });
         throw invalidCredentialsError;
       }
 
       if (user.isLocked()) {
         const lockoutEnd = new Date(user.lockoutUntil);
         const minutesRemaining = Math.ceil((lockoutEnd - new Date()) / 60000);
+        // Log failed login - account locked
+        await logAuthEvent('LOGIN_FAILED', {
+          userId: user.id,
+          email,
+          req,
+          metadata: { reason: 'Account locked' },
+        });
         throw createError(
           423,
           `Account locked. Try again in ${minutesRemaining} minute(s)`
@@ -184,6 +198,13 @@ router.post(
       }
 
       if (!user.isActive) {
+        // Log failed login - account deactivated
+        await logAuthEvent('LOGIN_FAILED', {
+          userId: user.id,
+          email,
+          req,
+          metadata: { reason: 'Account deactivated' },
+        });
         throw createError(401, 'Account is deactivated');
       }
 
@@ -201,6 +222,13 @@ router.post(
         }
 
         await user.update(updateData);
+        // Log failed login - invalid password
+        await logAuthEvent('LOGIN_FAILED', {
+          userId: user.id,
+          email,
+          req,
+          metadata: { reason: 'Invalid password', attemptNumber: newAttempts },
+        });
         throw invalidCredentialsError;
       }
 
@@ -212,6 +240,13 @@ router.post(
 
       const tokens = generateTokens(user);
       await user.update({ refreshToken: tokens.refreshToken });
+
+      // Log successful login
+      await logAuthEvent('LOGIN', {
+        userId: user.id,
+        email: user.email,
+        req,
+      });
 
       res.json({
         user: {
@@ -322,6 +357,13 @@ router.post('/logout', authenticate, async (req, res, next) => {
     if (user) {
       await user.update({ refreshToken: null });
     }
+
+    // Log logout
+    await logAuthEvent('LOGOUT', {
+      userId: req.user.id,
+      email: req.user.email,
+      req,
+    });
 
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
@@ -516,6 +558,13 @@ router.post(
         passwordResetToken: null,
         passwordResetExpires: null,
         refreshToken: null,
+      });
+
+      // Log password reset
+      await logAuthEvent('PASSWORD_RESET', {
+        userId: user.id,
+        email: user.email,
+        req,
       });
 
       res.json({ message: 'Password reset successful' });

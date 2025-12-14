@@ -9,11 +9,18 @@ const {
 const { authenticate, authorize } = require('../../middleware/auth');
 const { paginate } = require('../../middleware/pagination');
 const {
+  auditCreate,
+  auditUpdate,
+  auditDelete,
+  createModelGetter,
+} = require('../../middleware/audit');
+const {
   paginatedResponse,
   buildQueryOptions,
 } = require('../../utils/queryHelpers');
 
 const controller = require('../base/controller')(purchaseItems);
+const getPurchaseItem = createModelGetter(purchaseItems);
 
 const paginatedController = {
   async findAll(req, res, next) {
@@ -75,6 +82,7 @@ router.post(
   '/',
   authenticate,
   validateBody(purchaseItemSchemas.create),
+  auditCreate('purchase-item'),
   (req, res, next) => controller.create(req, res, next)
 );
 
@@ -253,6 +261,7 @@ router.put(
   authenticate,
   validateParams(idParamSchema),
   validateBody(purchaseItemSchemas.update),
+  auditUpdate('purchase-item', getPurchaseItem),
   (req, res, next) => controller.update(req, res, next)
 );
 
@@ -312,6 +321,7 @@ router.patch(
   authenticate,
   validateParams(idParamSchema),
   validateBody(purchaseItemSchemas.update),
+  auditUpdate('purchase-item', getPurchaseItem),
   (req, res, next) => controller.update(req, res, next)
 );
 
@@ -365,6 +375,7 @@ router.delete(
   authenticate,
   authorize('admin', 'manager'),
   validateParams(idParamSchema),
+  auditDelete('purchase-item', getPurchaseItem),
   (req, res, next) => controller.delete(req, res, next)
 );
 

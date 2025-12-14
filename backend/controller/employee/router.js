@@ -9,6 +9,12 @@ const {
 const { authenticate, authorize } = require('../../middleware/auth');
 const { paginate } = require('../../middleware/pagination');
 const {
+  auditCreate,
+  auditUpdate,
+  auditDelete,
+  createModelGetter,
+} = require('../../middleware/audit');
+const {
   parseSort,
   parseFilters,
   paginatedResponse,
@@ -16,6 +22,7 @@ const {
 } = require('../../utils/queryHelpers');
 
 const controller = require('../base/controller')(employees);
+const getEmployee = createModelGetter(employees);
 
 const FILTER_CONFIG = {
   name: {
@@ -117,6 +124,7 @@ router.post(
   authenticate,
   authorize('admin'),
   validateBody(employeeSchemas.create),
+  auditCreate('employee'),
   (req, res, next) => controller.create(req, res, next)
 );
 
@@ -367,6 +375,7 @@ router.put(
   authorize('admin'),
   validateParams(idParamSchema),
   validateBody(employeeSchemas.update),
+  auditUpdate('employee', getEmployee),
   (req, res, next) => controller.update(req, res, next)
 );
 
@@ -433,6 +442,7 @@ router.patch(
   authorize('admin'),
   validateParams(idParamSchema),
   validateBody(employeeSchemas.update),
+  auditUpdate('employee', getEmployee),
   (req, res, next) => controller.update(req, res, next)
 );
 
@@ -486,6 +496,7 @@ router.delete(
   authenticate,
   authorize('admin'),
   validateParams(idParamSchema),
+  auditDelete('employee', getEmployee),
   (req, res, next) => controller.delete(req, res, next)
 );
 

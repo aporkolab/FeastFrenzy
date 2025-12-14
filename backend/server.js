@@ -44,6 +44,7 @@ app.use(
   `${API_V1_PREFIX}/purchase-items`,
   require('./controller/purchase-item/router')
 );
+app.use(`${API_V1_PREFIX}/admin/audit-logs`, require('./controller/audit/router'));
 
 app.use('/employees', (req, res) => {
   res.redirect(
