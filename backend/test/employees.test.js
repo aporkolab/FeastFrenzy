@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { expect } = require('chai');
+
 const app = require('../server');
 const db = require('../model');
 const { generateTestToken, createTestUsers } = require('./test_helper');
@@ -8,7 +8,7 @@ describe('Employees API', () => {
   const API_BASE = '/api/v1';
   let adminToken, managerToken, employeeToken;
 
-  before(async () => {
+  beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
 
@@ -27,7 +27,7 @@ describe('Employees API', () => {
     it('should return 401 without authentication', async () => {
       const res = await request(app).get(`${API_BASE}/employees`).expect(401);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return 403 when employee tries to list all employees', async () => {
@@ -36,7 +36,7 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return empty array for manager when no employees exist', async () => {
@@ -45,8 +45,8 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(0);
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(0);
     });
 
     it('should return all employees for admin', async () => {
@@ -73,11 +73,11 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(3);
-      expect(res.body[0]).to.have.property('name');
-      expect(res.body[0]).to.have.property('employee_number');
-      expect(res.body[0]).to.have.property('monthlyConsumptionValue');
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(3);
+      expect(res.body.data[0]).toHaveProperty('name');
+      expect(res.body.data[0]).toHaveProperty('employee_number');
+      expect(res.body.data[0]).toHaveProperty('monthlyConsumptionValue');
     });
 
     it('should return all employees for manager', async () => {
@@ -99,8 +99,8 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(2);
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(2);
     });
   });
 
@@ -117,7 +117,7 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should return a single employee by ID for admin', async () => {
@@ -132,10 +132,10 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('id', employee.id);
-      expect(res.body).to.have.property('name', 'Test Employee');
-      expect(res.body).to.have.property('employee_number', 'EMP100');
-      expect(res.body.monthlyConsumptionValue).to.equal(500);
+      expect(res.body).toHaveProperty('id', employee.id);
+      expect(res.body).toHaveProperty('name', 'Test Employee');
+      expect(res.body).toHaveProperty('employee_number', 'EMP100');
+      expect(res.body.monthlyConsumptionValue).toBe(500);
     });
 
     it('should return a single employee by ID for manager', async () => {
@@ -150,7 +150,7 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('id', employee.id);
+      expect(res.body).toHaveProperty('id', employee.id);
     });
 
     it('should return 404 for non-existent employee', async () => {
@@ -159,8 +159,8 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error).to.have.property('code', 'NOT_FOUND');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error).toHaveProperty('code', 'NOT_FOUND');
     });
   });
 
@@ -178,7 +178,7 @@ describe('Employees API', () => {
         .send(newEmployee)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return 403 when manager tries to create', async () => {
@@ -194,7 +194,7 @@ describe('Employees API', () => {
         .send(newEmployee)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should create a new employee with admin token', async () => {
@@ -210,13 +210,13 @@ describe('Employees API', () => {
         .send(newEmployee)
         .expect(201);
 
-      expect(res.body).to.have.property('id');
-      expect(res.body).to.have.property('name', 'New Employee');
-      expect(res.body).to.have.property('employee_number', 'EMP200');
-      expect(res.body.monthlyConsumptionValue).to.equal(1000);
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('name', 'New Employee');
+      expect(res.body).toHaveProperty('employee_number', 'EMP200');
+      expect(res.body.monthlyConsumptionValue).toBe(1000);
 
       const dbEmployee = await db.employees.findByPk(res.body.id);
-      expect(dbEmployee).to.not.be.null;
+      expect(dbEmployee).not.toBeNull();
     });
 
     it('should return 400 for missing required name', async () => {
@@ -226,7 +226,7 @@ describe('Employees API', () => {
         .send({ employee_number: 'EMP999', monthlyConsumptionValue: 1000 })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should return 409 for duplicate employee_number', async () => {
@@ -246,8 +246,8 @@ describe('Employees API', () => {
         })
         .expect(409);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.code).to.equal('CONFLICT');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.code).toBe('CONFLICT');
     });
   });
 
@@ -265,7 +265,7 @@ describe('Employees API', () => {
         .send({ name: 'Updated Name', monthlyConsumptionValue: 200 })
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return 403 when manager tries to update', async () => {
@@ -281,7 +281,7 @@ describe('Employees API', () => {
         .send({ name: 'Updated Name', monthlyConsumptionValue: 200 })
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should update an existing employee with admin token', async () => {
@@ -297,8 +297,8 @@ describe('Employees API', () => {
         .send({ name: 'Updated Name', monthlyConsumptionValue: 200 })
         .expect(200);
 
-      expect(res.body).to.have.property('name', 'Updated Name');
-      expect(res.body.monthlyConsumptionValue).to.equal(200);
+      expect(res.body).toHaveProperty('name', 'Updated Name');
+      expect(res.body.monthlyConsumptionValue).toBe(200);
     });
 
     it('should return 404 when updating non-existent employee', async () => {
@@ -308,7 +308,7 @@ describe('Employees API', () => {
         .send({ name: 'Ghost', monthlyConsumptionValue: 0 })
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should allow partial updates', async () => {
@@ -324,8 +324,8 @@ describe('Employees API', () => {
         .send({ monthlyConsumptionValue: 500 })
         .expect(200);
 
-      expect(res.body).to.have.property('name', 'Test Employee');
-      expect(res.body.monthlyConsumptionValue).to.equal(500);
+      expect(res.body).toHaveProperty('name', 'Test Employee');
+      expect(res.body.monthlyConsumptionValue).toBe(500);
     });
   });
 
@@ -342,7 +342,7 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return 403 when manager tries to delete', async () => {
@@ -357,7 +357,7 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should delete an existing employee with admin token', async () => {
@@ -372,10 +372,10 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('deleted', true);
+      expect(res.body).toHaveProperty('deleted', true);
 
       const deleted = await db.employees.findByPk(employee.id);
-      expect(deleted).to.be.null;
+      expect(deleted).toBeNull();
     });
 
     it('should return 404 when deleting non-existent employee', async () => {
@@ -384,7 +384,7 @@ describe('Employees API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
   });
 
@@ -400,7 +400,7 @@ describe('Employees API', () => {
         })
         .expect(201);
 
-      expect(res.body.monthlyConsumptionValue).to.equal(0);
+      expect(res.body.monthlyConsumptionValue).toBe(0);
     });
 
     it('should handle large consumption values', async () => {
@@ -414,7 +414,7 @@ describe('Employees API', () => {
         })
         .expect(201);
 
-      expect(res.body.monthlyConsumptionValue).to.equal(999999);
+      expect(res.body.monthlyConsumptionValue).toBe(999999);
     });
   });
 });

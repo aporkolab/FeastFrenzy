@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { expect } = require('chai');
+
 const app = require('../server');
 const db = require('../model');
 const { generateTestToken, createTestUsers } = require('./test_helper');
@@ -8,7 +8,7 @@ describe('Validation Middleware', () => {
   const API_BASE = '/api/v1';
   let adminToken;
 
-  before(async () => {
+  beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
 
@@ -25,8 +25,8 @@ describe('Validation Middleware', () => {
         .send({ price: 10.0 })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('name');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('name');
     });
 
     it('should reject product without price', async () => {
@@ -36,8 +36,8 @@ describe('Validation Middleware', () => {
         .send({ name: 'Test Product' })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('price');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('price');
     });
 
     it('should reject product with negative price', async () => {
@@ -47,8 +47,8 @@ describe('Validation Middleware', () => {
         .send({ name: 'Test Product', price: -10 })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message.toLowerCase()).to.include('price');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message.toLowerCase()).toContain('price');
     });
 
     it('should reject product with price over max', async () => {
@@ -58,8 +58,8 @@ describe('Validation Middleware', () => {
         .send({ name: 'Test Product', price: 9999999.99 })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message.toLowerCase()).to.include('price');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message.toLowerCase()).toContain('price');
     });
 
     it('should reject product with empty name', async () => {
@@ -69,7 +69,7 @@ describe('Validation Middleware', () => {
         .send({ name: '', price: 10.0 })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should reject update with no fields', async () => {
@@ -79,8 +79,8 @@ describe('Validation Middleware', () => {
         .send({})
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('At least one field');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('At least one field');
     });
 
     it('should strip unknown fields', async () => {
@@ -95,8 +95,8 @@ describe('Validation Middleware', () => {
         })
         .expect(201);
 
-      expect(res.body).to.not.have.property('unknownField');
-      expect(res.body).to.not.have.property('maliciousField');
+      expect(res.body).not.toHaveProperty('unknownField');
+      expect(res.body).not.toHaveProperty('maliciousField');
     });
   });
 
@@ -111,8 +111,8 @@ describe('Validation Middleware', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('name');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('name');
     });
 
     it('should reject employee without employee_number', async () => {
@@ -125,8 +125,8 @@ describe('Validation Middleware', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('employee_number');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('employee_number');
     });
 
     it('should reject employee with negative consumption value', async () => {
@@ -140,8 +140,8 @@ describe('Validation Middleware', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('consumption');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('consumption');
     });
   });
 
@@ -156,8 +156,8 @@ describe('Validation Middleware', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('date');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('date');
     });
 
     it('should reject purchase without employeeId', async () => {
@@ -170,8 +170,8 @@ describe('Validation Middleware', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('Employee');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('Employee');
     });
 
     it('should reject purchase with invalid date format', async () => {
@@ -185,8 +185,8 @@ describe('Validation Middleware', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('date');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('date');
     });
 
     it('should accept purchase with default values', async () => {
@@ -198,7 +198,7 @@ describe('Validation Middleware', () => {
           employeeId: 1,
         });
 
-      expect(res.status).to.not.equal(400);
+      expect(res.status).not.toBe(400);
     });
   });
 
@@ -209,8 +209,8 @@ describe('Validation Middleware', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('ID');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('ID');
     });
 
     it('should reject negative ID', async () => {
@@ -219,7 +219,7 @@ describe('Validation Middleware', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should reject zero ID', async () => {
@@ -228,7 +228,7 @@ describe('Validation Middleware', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should accept valid numeric ID', async () => {
@@ -236,7 +236,7 @@ describe('Validation Middleware', () => {
         .get(`${API_BASE}/products/1`)
         .set('Authorization', `Bearer ${adminToken}`);
 
-      expect(res.status).to.not.equal(400);
+      expect(res.status).not.toBe(400);
     });
   });
 
@@ -248,10 +248,10 @@ describe('Validation Middleware', () => {
         .send({})
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error).to.have.property('details');
-      expect(res.body.error.details).to.be.an('array');
-      expect(res.body.error.details.length).to.be.greaterThan(1);
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error).toHaveProperty('details');
+      expect(res.body.error.details).toEqual(expect.any(Array));
+      expect(res.body.error.details.length).toBeGreaterThan(1);
     });
 
     it('should include field name in error details', async () => {
@@ -261,9 +261,9 @@ describe('Validation Middleware', () => {
         .send({ name: 'Test' })
         .expect(400);
 
-      expect(res.body.error.details).to.be.an('array');
-      expect(res.body.error.details[0]).to.have.property('field');
-      expect(res.body.error.details[0]).to.have.property('message');
+      expect(res.body.error.details).toEqual(expect.any(Array));
+      expect(res.body.error.details[0]).toHaveProperty('field');
+      expect(res.body.error.details[0]).toHaveProperty('message');
     });
   });
 });

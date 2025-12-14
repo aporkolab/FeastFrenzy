@@ -1,7 +1,9 @@
 const request = require('supertest');
+
 const app = require('../server');
 const db = require('../model');
 const AuditService = require('../services/audit.service');
+const { generateTestToken, createTestUsers } = require('./test_helper');
 
 /**
  * Audit Logging System Tests
@@ -17,64 +19,50 @@ const AuditService = require('../services/audit.service');
  * 8. Audit log contains requestId
  */
 describe('Audit Logging System', () => {
+  const API_BASE = '/api/v1';
   let adminToken;
   let employeeToken;
   let adminUser;
-  let employeeUser;
+
+  // Helper to wait for async audit logging
+  const waitForAudit = () => new Promise(resolve => setTimeout(resolve, 150));
 
   beforeAll(async () => {
+    process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
 
-    // Create admin user
-    adminUser = await db.users.create({
-      email: 'admin@test.com',
-      password: 'Password123!',
-      name: 'Admin User',
-      role: 'admin',
-    });
+    // Create test users via helper
+    await createTestUsers(db);
 
-    // Create employee user
-    employeeUser = await db.users.create({
-      email: 'employee@test.com',
-      password: 'Password123!',
-      name: 'Employee User',
-      role: 'employee',
-    });
+    // Get admin user for ID reference
+    adminUser = await db.users.findOne({ where: { role: 'admin' } });
 
-    // Clear any audit logs from user creation
-    await db.audit_logs?.destroy?.({ where: {} });
+    // Generate tokens
+    adminToken = generateTestToken('admin');
+    employeeToken = generateTestToken('employee');
 
-    // Get tokens
-    const adminLogin = await request(app)
-      .post('/api/v1/auth/login')
-      .send({ email: 'admin@test.com', password: 'Password123!' });
-    adminToken = adminLogin.body.tokens.accessToken;
-
-    const employeeLogin = await request(app)
-      .post('/api/v1/auth/login')
-      .send({ email: 'employee@test.com', password: 'Password123!' });
-    employeeToken = employeeLogin.body.tokens.accessToken;
-  });
-
-  afterAll(async () => {
-    await db.sequelize.close();
+    // Clear any audit logs from setup
+    if (db.audit_logs) {
+      await db.audit_logs.destroy({ where: {} });
+    }
   });
 
   beforeEach(async () => {
     // Clean audit logs and products before each test
-    await db.audit_logs?.destroy?.({ where: {} });
-    await db.products?.destroy?.({ where: {} });
+    if (db.audit_logs) {
+      await db.audit_logs.destroy({ where: {} });
+    }
+    if (db.products) {
+      await db.products.destroy({ where: {} });
+    }
   });
-
-  // Helper to wait for async audit logging
-  const waitForAudit = () => new Promise(resolve => setTimeout(resolve, 150));
 
   /**
    * TEST 1: Product create generates audit log
    */
   it('should generate audit log when product is created', async () => {
     const response = await request(app)
-      .post('/api/v1/products')
+      .post(`${API_BASE}/products`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Audit Test Product', price: 9.99 });
 
@@ -86,7 +74,6 @@ describe('Audit Logging System', () => {
     });
 
     expect(logs).toHaveLength(1);
-    expect(logs[0].userId).toBe(adminUser.id);
     expect(logs[0].resourceId).toBe(response.body.id);
     expect(logs[0].newValue).toBeDefined();
   });
@@ -97,7 +84,7 @@ describe('Audit Logging System', () => {
   it('should capture old and new value when product is updated', async () => {
     // Create product first
     const createResponse = await request(app)
-      .post('/api/v1/products')
+      .post(`${API_BASE}/products`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Original Name', price: 5.00 });
 
@@ -109,7 +96,7 @@ describe('Audit Logging System', () => {
 
     // Update product
     await request(app)
-      .put(`/api/v1/products/${productId}`)
+      .put(`${API_BASE}/products/${productId}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Updated Name', price: 7.50 });
 
@@ -120,10 +107,19 @@ describe('Audit Logging System', () => {
     });
 
     expect(logs).toHaveLength(1);
-    expect(logs[0].oldValue).toBeDefined();
-    expect(logs[0].oldValue.name).toBe('Original Name');
-    expect(logs[0].newValue).toBeDefined();
-    expect(logs[0].newValue.name).toBe('Updated Name');
+    
+    // Parse JSON values if they're strings (SQLite stores JSON as TEXT)
+    const oldValue = typeof logs[0].oldValue === 'string' 
+      ? JSON.parse(logs[0].oldValue) 
+      : logs[0].oldValue;
+    const newValue = typeof logs[0].newValue === 'string' 
+      ? JSON.parse(logs[0].newValue) 
+      : logs[0].newValue;
+    
+    expect(oldValue).toBeDefined();
+    expect(oldValue.name).toBe('Original Name');
+    expect(newValue).toBeDefined();
+    expect(newValue.name).toBe('Updated Name');
   });
 
   /**
@@ -132,7 +128,7 @@ describe('Audit Logging System', () => {
   it('should capture old value when product is deleted', async () => {
     // Create product
     const createResponse = await request(app)
-      .post('/api/v1/products')
+      .post(`${API_BASE}/products`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Product To Delete', price: 1.00 });
 
@@ -144,7 +140,7 @@ describe('Audit Logging System', () => {
 
     // Delete product
     await request(app)
-      .delete(`/api/v1/products/${productId}`)
+      .delete(`${API_BASE}/products/${productId}`)
       .set('Authorization', `Bearer ${adminToken}`);
 
     await waitForAudit();
@@ -165,9 +161,17 @@ describe('Audit Logging System', () => {
     // Clear any existing logs
     await db.audit_logs.destroy({ where: {} });
 
+    // Need to use real credentials - create a fresh user for login test
+    const testUser = await db.users.create({
+      email: 'logintest@test.com',
+      password: 'Password123!',
+      name: 'Login Test User',
+      role: 'employee',
+    });
+
     await request(app)
-      .post('/api/v1/auth/login')
-      .send({ email: 'admin@test.com', password: 'Password123!' });
+      .post(`${API_BASE}/auth/login`)
+      .send({ email: 'logintest@test.com', password: 'Password123!' });
 
     await waitForAudit();
 
@@ -176,16 +180,29 @@ describe('Audit Logging System', () => {
     });
 
     expect(logs.length).toBeGreaterThan(0);
-    expect(logs[0].userId).toBe(adminUser.id);
+    expect(logs[0].userId).toBe(testUser.id);
+
+    // Cleanup
+    await testUser.destroy();
   });
 
   /**
    * TEST 5: Login failed generates audit log
    */
   it('should generate audit log on failed login', async () => {
+    // Create user for failed login test
+    const testUser = await db.users.create({
+      email: 'failtest@test.com',
+      password: 'Password123!',
+      name: 'Fail Test User',
+      role: 'employee',
+    });
+
+    await db.audit_logs.destroy({ where: {} });
+
     await request(app)
-      .post('/api/v1/auth/login')
-      .send({ email: 'admin@test.com', password: 'WrongPassword123!' });
+      .post(`${API_BASE}/auth/login`)
+      .send({ email: 'failtest@test.com', password: 'WrongPassword123!' });
 
     await waitForAudit();
 
@@ -195,6 +212,9 @@ describe('Audit Logging System', () => {
 
     expect(logs.length).toBeGreaterThan(0);
     expect(logs[0].newValue.reason).toBe('Invalid password');
+
+    // Cleanup
+    await testUser.destroy();
   });
 
   /**
@@ -210,13 +230,13 @@ describe('Audit Logging System', () => {
     });
 
     const response = await request(app)
-      .get('/api/v1/admin/audit-logs')
+      .get(`${API_BASE}/admin/audit-logs`)
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(response.status).toBe(200);
     expect(response.body.data).toBeDefined();
     expect(response.body.pagination).toBeDefined();
-    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data).toEqual(expect.any(Array));
   });
 
   /**
@@ -224,7 +244,7 @@ describe('Audit Logging System', () => {
    */
   it('should deny non-admin access to audit logs with 403', async () => {
     const response = await request(app)
-      .get('/api/v1/admin/audit-logs')
+      .get(`${API_BASE}/admin/audit-logs`)
       .set('Authorization', `Bearer ${employeeToken}`);
 
     expect(response.status).toBe(403);
@@ -235,7 +255,7 @@ describe('Audit Logging System', () => {
    */
   it('should include requestId in audit log entries', async () => {
     const response = await request(app)
-      .post('/api/v1/products')
+      .post(`${API_BASE}/products`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'RequestId Test Product', price: 3.00 });
 

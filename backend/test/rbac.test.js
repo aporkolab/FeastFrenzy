@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { expect } = require('chai');
+
 const app = require('../server');
 const db = require('../model');
 const {
@@ -13,7 +13,7 @@ describe('RBAC (Role-Based Access Control)', () => {
   const API_BASE = '/api/v1';
   let adminToken, managerToken, employeeToken;
 
-  before(async () => {
+  beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
 
@@ -34,8 +34,8 @@ describe('RBAC (Role-Based Access Control)', () => {
     it('should return 401 when no token is provided', async () => {
       const res = await request(app).get(`${API_BASE}/products`).expect(401);
 
-      expect(res.body).to.have.property('error');
-      expect(res.body.error.message).to.include('token');
+      expect(res.body).toHaveProperty('error');
+      expect(res.body.error.message).toContain('token');
     });
 
     it('should return 401 when invalid token is provided', async () => {
@@ -46,7 +46,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${invalidToken}`)
         .expect(401);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return 401 when expired token is provided', async () => {
@@ -57,8 +57,8 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${expiredToken}`)
         .expect(401);
 
-      expect(res.body).to.have.property('error');
-      expect(res.body.error.message).to.include('expired');
+      expect(res.body).toHaveProperty('error');
+      expect(res.body.error.message).toContain('expired');
     });
 
     it('should return 401 for malformed authorization header', async () => {
@@ -67,7 +67,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', 'InvalidFormat token123')
         .expect(401);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
   });
 
@@ -80,7 +80,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
+      expect(res.body.data).toEqual(expect.any(Array));
     });
 
     it('should deny employee from creating product (403)', async () => {
@@ -90,7 +90,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .send({ name: 'New Product', price: 10.0 })
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should allow manager to create product (201)', async () => {
@@ -100,8 +100,8 @@ describe('RBAC (Role-Based Access Control)', () => {
         .send({ name: 'Manager Product', price: 15.0 })
         .expect(201);
 
-      expect(res.body).to.have.property('id');
-      expect(res.body.name).to.equal('Manager Product');
+      expect(res.body).toHaveProperty('id');
+      expect(res.body.name).toBe('Manager Product');
     });
 
     it('should allow admin to delete product (200)', async () => {
@@ -115,7 +115,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body.deleted).to.be.true;
+      expect(res.body.deleted).toBe(true);
     });
 
     it('should deny manager from deleting product (403)', async () => {
@@ -129,7 +129,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
   });
 
@@ -140,7 +140,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should allow manager to view employees (200)', async () => {
@@ -155,8 +155,8 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(1);
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(1);
     });
 
     it('should deny manager from creating employee (403)', async () => {
@@ -170,7 +170,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         })
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should allow admin to create employee (201)', async () => {
@@ -184,7 +184,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         })
         .expect(201);
 
-      expect(res.body).to.have.property('id');
+      expect(res.body).toHaveProperty('id');
     });
 
     it('should deny employee from viewing single employee (403)', async () => {
@@ -199,7 +199,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
   });
 
@@ -236,8 +236,8 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body).to.have.lengthOf(1);
-      expect(parseFloat(res.body[0].total)).to.equal(50.0);
+      expect(res.body.data).toHaveLength(1);
+      expect(parseFloat(res.body.data[0].total)).toBe(50.0);
     });
 
     it('should deny employee from deleting purchase (403)', async () => {
@@ -254,7 +254,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should allow admin to delete any purchase (200)', async () => {
@@ -271,7 +271,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body.deleted).to.be.true;
+      expect(res.body.deleted).toBe(true);
     });
 
     it('should allow manager to delete any purchase (200)', async () => {
@@ -288,7 +288,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
-      expect(res.body.deleted).to.be.true;
+      expect(res.body.deleted).toBe(true);
     });
 
     it('should deny employee from accessing another user purchase (403)', async () => {
@@ -305,7 +305,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should allow employee to access own purchase (200)', async () => {
@@ -322,7 +322,7 @@ describe('RBAC (Role-Based Access Control)', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('id', purchase.id);
+      expect(res.body).toHaveProperty('id', purchase.id);
     });
   });
 

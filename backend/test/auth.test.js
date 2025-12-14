@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { expect } = require('chai');
+
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const app = require('../server');
@@ -20,7 +20,7 @@ describe('Auth API', () => {
     password: 'Admin123!',
   };
 
-  before(async () => {
+  beforeAll(async () => {
     await db.sequelize.sync({ force: true });
   });
 
@@ -35,22 +35,22 @@ describe('Auth API', () => {
         .send(validUser)
         .expect(201);
 
-      expect(res.body).to.have.property('user');
-      expect(res.body).to.have.property('tokens');
-      expect(res.body.user).to.have.property('id');
-      expect(res.body.user).to.have.property('name', validUser.name);
-      expect(res.body.user).to.have.property(
+      expect(res.body).toHaveProperty('user');
+      expect(res.body).toHaveProperty('tokens');
+      expect(res.body.user).toHaveProperty('id');
+      expect(res.body.user).toHaveProperty('name', validUser.name);
+      expect(res.body.user).toHaveProperty(
         'email',
         validUser.email.toLowerCase()
       );
-      expect(res.body.user).to.have.property('role', 'employee');
-      expect(res.body.user).to.not.have.property('password');
-      expect(res.body.tokens).to.have.property('accessToken');
-      expect(res.body.tokens).to.have.property('refreshToken');
+      expect(res.body.user).toHaveProperty('role', 'employee');
+      expect(res.body.user).not.toHaveProperty('password');
+      expect(res.body.tokens).toHaveProperty('accessToken');
+      expect(res.body.tokens).toHaveProperty('refreshToken');
 
       const dbUser = await db.users.findByEmail(validUser.email);
-      expect(dbUser).to.not.be.null;
-      expect(dbUser.password).to.not.equal(validUser.password);
+      expect(dbUser).not.toBeNull();
+      expect(dbUser.password).not.toBe(validUser.password);
     });
 
     it('should return 409 for duplicate email', async () => {
@@ -64,8 +64,8 @@ describe('Auth API', () => {
         .send(validUser)
         .expect(409);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error).to.have.property('code', 'CONFLICT');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error).toHaveProperty('code', 'CONFLICT');
     });
 
     it('should return 400 for weak password (missing uppercase)', async () => {
@@ -78,8 +78,8 @@ describe('Auth API', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('uppercase');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('uppercase');
     });
 
     it('should return 400 for weak password (missing number)', async () => {
@@ -92,7 +92,7 @@ describe('Auth API', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should return 400 for short password', async () => {
@@ -105,8 +105,8 @@ describe('Auth API', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('8');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('8');
     });
 
     it('should return 400 for invalid email format', async () => {
@@ -119,8 +119,8 @@ describe('Auth API', () => {
         })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.include('email');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toContain('email');
     });
 
     it('should return 400 for missing required fields', async () => {
@@ -129,7 +129,7 @@ describe('Auth API', () => {
         .send({ email: 'test@test.com' })
         .expect(400);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
   });
 
@@ -147,14 +147,14 @@ describe('Auth API', () => {
         })
         .expect(200);
 
-      expect(res.body).to.have.property('user');
-      expect(res.body).to.have.property('tokens');
-      expect(res.body.user).to.have.property(
+      expect(res.body).toHaveProperty('user');
+      expect(res.body).toHaveProperty('tokens');
+      expect(res.body.user).toHaveProperty(
         'email',
         validUser.email.toLowerCase()
       );
-      expect(res.body.tokens).to.have.property('accessToken');
-      expect(res.body.tokens).to.have.property('refreshToken');
+      expect(res.body.tokens).toHaveProperty('accessToken');
+      expect(res.body.tokens).toHaveProperty('refreshToken');
     });
 
     it('should return 401 for wrong password', async () => {
@@ -166,8 +166,8 @@ describe('Auth API', () => {
         })
         .expect(401);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.equal('Invalid credentials');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toBe('Invalid credentials');
     });
 
     it('should return 401 for non-existent email', async () => {
@@ -179,8 +179,8 @@ describe('Auth API', () => {
         })
         .expect(401);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error.message).to.equal('Invalid credentials');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error.message).toBe('Invalid credentials');
     });
 
     it('should lock account after 5 failed login attempts', async () => {
@@ -199,7 +199,7 @@ describe('Auth API', () => {
         })
         .expect(423);
 
-      expect(res.body.error.message).to.include('locked');
+      expect(res.body.error.message).toContain('locked');
     });
 
     it('should update lastLogin timestamp on successful login', async () => {
@@ -212,7 +212,7 @@ describe('Auth API', () => {
         .expect(200);
 
       const user = await db.users.findByEmail(validUser.email);
-      expect(user.lastLogin).to.not.be.null;
+      expect(user.lastLogin).not.toBeNull();
     });
   });
 
@@ -232,10 +232,10 @@ describe('Auth API', () => {
         .send({ refreshToken: tokens.refreshToken })
         .expect(200);
 
-      expect(res.body).to.have.property('accessToken');
-      expect(res.body).to.have.property('refreshToken');
+      expect(res.body).toHaveProperty('accessToken');
+      expect(res.body).toHaveProperty('refreshToken');
 
-      expect(res.body.refreshToken).to.not.equal(tokens.refreshToken);
+      expect(res.body.refreshToken).not.toBe(tokens.refreshToken);
     });
 
     it('should invalidate old refresh token after rotation', async () => {
@@ -249,7 +249,7 @@ describe('Auth API', () => {
         .send({ refreshToken: tokens.refreshToken })
         .expect(401);
 
-      expect(res.body.error.message).to.equal('Invalid refresh token');
+      expect(res.body.error.message).toBe('Invalid refresh token');
     });
 
     it('should return 401 for invalid refresh token', async () => {
@@ -258,7 +258,7 @@ describe('Auth API', () => {
         .send({ refreshToken: 'invalid-token' })
         .expect(401);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should return 401 for expired refresh token', async () => {
@@ -273,7 +273,7 @@ describe('Auth API', () => {
         .send({ refreshToken: expiredToken })
         .expect(401);
 
-      expect(res.body.error.message).to.include('Invalid');
+      expect(res.body.error.message).toContain('Invalid');
     });
   });
 
@@ -293,10 +293,10 @@ describe('Auth API', () => {
         .set('Authorization', `Bearer ${tokens.accessToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('message', 'Logged out successfully');
+      expect(res.body).toHaveProperty('message', 'Logged out successfully');
 
       const user = await db.users.findByEmail(validUser.email);
-      expect(user.refreshToken).to.be.null;
+      expect(user.refreshToken).toBeNull();
 
       const refreshRes = await request(app)
         .post(`${API_BASE}/refresh`)
@@ -307,7 +307,7 @@ describe('Auth API', () => {
     it('should return 401 without authorization header', async () => {
       const res = await request(app).post(`${API_BASE}/logout`).expect(401);
 
-      expect(res.body.error.message).to.include('token');
+      expect(res.body.error.message).toContain('token');
     });
   });
 
@@ -327,19 +327,19 @@ describe('Auth API', () => {
         .set('Authorization', `Bearer ${tokens.accessToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('user');
-      expect(res.body.user).to.have.property(
+      expect(res.body).toHaveProperty('user');
+      expect(res.body.user).toHaveProperty(
         'email',
         validUser.email.toLowerCase()
       );
-      expect(res.body.user).to.have.property('name', validUser.name);
-      expect(res.body.user).to.not.have.property('password');
+      expect(res.body.user).toHaveProperty('name', validUser.name);
+      expect(res.body.user).not.toHaveProperty('password');
     });
 
     it('should return 401 without token', async () => {
       const res = await request(app).get(`${API_BASE}/me`).expect(401);
 
-      expect(res.body.error.message).to.include('token');
+      expect(res.body.error.message).toContain('token');
     });
 
     it('should return 401 with expired token', async () => {
@@ -354,7 +354,7 @@ describe('Auth API', () => {
         .set('Authorization', `Bearer ${expiredToken}`)
         .expect(401);
 
-      expect(res.body.error.message).to.include('expired');
+      expect(res.body.error.message).toContain('expired');
     });
 
     it('should return 401 with malformed token', async () => {
@@ -363,7 +363,7 @@ describe('Auth API', () => {
         .set('Authorization', 'Bearer not-a-valid-jwt')
         .expect(401);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
   });
 
@@ -378,14 +378,14 @@ describe('Auth API', () => {
         .send({ email: validUser.email })
         .expect(200);
 
-      expect(res.body).to.have.property(
+      expect(res.body).toHaveProperty(
         'message',
         'If email exists, reset link sent'
       );
 
       const user = await db.users.findByEmail(validUser.email);
-      expect(user.passwordResetToken).to.not.be.null;
-      expect(user.passwordResetExpires).to.not.be.null;
+      expect(user.passwordResetToken).not.toBeNull();
+      expect(user.passwordResetExpires).not.toBeNull();
     });
 
     it('should return same success message for non-existent email (security)', async () => {
@@ -394,7 +394,7 @@ describe('Auth API', () => {
         .send({ email: 'nonexistent@test.com' })
         .expect(200);
 
-      expect(res.body).to.have.property(
+      expect(res.body).toHaveProperty(
         'message',
         'If email exists, reset link sent'
       );
@@ -433,7 +433,7 @@ describe('Auth API', () => {
         })
         .expect(200);
 
-      expect(res.body).to.have.property('message', 'Password reset successful');
+      expect(res.body).toHaveProperty('message', 'Password reset successful');
 
       const loginRes = await request(app)
         .post(`${API_BASE}/login`)
@@ -443,7 +443,7 @@ describe('Auth API', () => {
         })
         .expect(200);
 
-      expect(loginRes.body).to.have.property('tokens');
+      expect(loginRes.body).toHaveProperty('tokens');
     });
 
     it('should return 400 for invalid reset token', async () => {
@@ -455,7 +455,7 @@ describe('Auth API', () => {
         })
         .expect(400);
 
-      expect(res.body.error.message).to.include('Invalid');
+      expect(res.body.error.message).toContain('Invalid');
     });
 
     it('should return 400 for expired reset token', async () => {
@@ -478,7 +478,7 @@ describe('Auth API', () => {
         })
         .expect(400);
 
-      expect(res.body.error.message).to.include('expired');
+      expect(res.body.error.message).toContain('expired');
     });
 
     it('should invalidate reset token after use', async () => {
@@ -498,7 +498,7 @@ describe('Auth API', () => {
         })
         .expect(400);
 
-      expect(res.body.error.message).to.include('Invalid');
+      expect(res.body.error.message).toContain('Invalid');
     });
   });
 
@@ -509,7 +509,7 @@ describe('Auth API', () => {
         .send(validUser)
         .expect(201);
 
-      expect(JSON.stringify(registerRes.body)).to.not.include(
+      expect(JSON.stringify(registerRes.body)).not.toContain(
         validUser.password
       );
 
@@ -518,7 +518,7 @@ describe('Auth API', () => {
         .send({ email: validUser.email, password: validUser.password })
         .expect(200);
 
-      expect(JSON.stringify(loginRes.body)).to.not.include(validUser.password);
+      expect(JSON.stringify(loginRes.body)).not.toContain(validUser.password);
     });
 
     it('should handle case-insensitive email login', async () => {
@@ -535,7 +535,7 @@ describe('Auth API', () => {
         })
         .expect(200);
 
-      expect(res.body).to.have.property('tokens');
+      expect(res.body).toHaveProperty('tokens');
     });
 
     it('should reject request without Content-Type', async () => {
@@ -544,7 +544,7 @@ describe('Auth API', () => {
         .set('Content-Type', '')
         .send('email=test@test.com&password=test');
 
-      expect(res.status).to.be.oneOf([400, 401, 415]);
+      expect([400, 401, 415]).toContain(res.status);
     });
   });
 });

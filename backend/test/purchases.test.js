@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { expect } = require('chai');
+
 const app = require('../server');
 const db = require('../model');
 const { generateTestToken, createTestUsers } = require('./test_helper');
@@ -9,7 +9,7 @@ describe('Purchases API', () => {
   let adminToken, managerToken, employeeToken;
   let testEmployee;
 
-  before(async () => {
+  beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     await db.sequelize.sync({ force: true });
 
@@ -35,7 +35,7 @@ describe('Purchases API', () => {
     it('should return 401 without authentication', async () => {
       const res = await request(app).get(`${API_BASE}/purchases`).expect(401);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return empty array when no purchases exist for admin', async () => {
@@ -44,8 +44,8 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(0);
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(0);
     });
 
     it('should return all purchases for admin', async () => {
@@ -71,8 +71,8 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(2);
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(2);
     });
 
     it('should return all purchases for manager', async () => {
@@ -96,8 +96,8 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(2);
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(2);
     });
 
     it('should return only own purchases for employee', async () => {
@@ -122,9 +122,9 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body).to.be.an('array');
-      expect(res.body).to.have.lengthOf(1);
-      expect(parseFloat(res.body[0].total)).to.equal(25.5);
+      expect(res.body.data).toEqual(expect.any(Array));
+      expect(res.body.data).toHaveLength(1);
+      expect(parseFloat(res.body.data[0].total)).toBe(25.5);
     });
   });
 
@@ -143,7 +143,7 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should return own purchase for employee', async () => {
@@ -160,8 +160,8 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('id', purchase.id);
-      expect(parseFloat(res.body.total)).to.equal(50.0);
+      expect(res.body).toHaveProperty('id', purchase.id);
+      expect(parseFloat(res.body.total)).toBe(50.0);
     });
 
     it('should return any purchase for admin', async () => {
@@ -178,7 +178,7 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('id', purchase.id);
+      expect(res.body).toHaveProperty('id', purchase.id);
     });
 
     it('should return 404 for non-existent purchase', async () => {
@@ -187,8 +187,8 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error).to.have.property('code', 'NOT_FOUND');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error).toHaveProperty('code', 'NOT_FOUND');
     });
   });
 
@@ -207,13 +207,13 @@ describe('Purchases API', () => {
         .send(newPurchase)
         .expect(201);
 
-      expect(res.body).to.have.property('id');
-      expect(res.body).to.have.property('employeeId', testEmployee.id);
-      expect(parseFloat(res.body.total)).to.equal(75.5);
-      expect(res.body).to.have.property('closed', false);
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('employeeId', testEmployee.id);
+      expect(parseFloat(res.body.total)).toBe(75.5);
+      expect(res.body).toHaveProperty('closed', false);
 
       const dbPurchase = await db.purchases.findByPk(res.body.id);
-      expect(dbPurchase).to.not.be.null;
+      expect(dbPurchase).not.toBeNull();
     });
 
     it('should create a purchase with employee token and attach userId', async () => {
@@ -230,11 +230,11 @@ describe('Purchases API', () => {
         .send(newPurchase)
         .expect(201);
 
-      expect(res.body).to.have.property('id');
-      expect(res.body).to.have.property('userId', 3);
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('userId', 3);
 
       const dbPurchase = await db.purchases.findByPk(res.body.id);
-      expect(dbPurchase.userId).to.equal(3);
+      expect(dbPurchase.userId).toBe(3);
     });
 
     it('should create a closed purchase', async () => {
@@ -249,7 +249,7 @@ describe('Purchases API', () => {
         })
         .expect(201);
 
-      expect(res.body).to.have.property('closed', true);
+      expect(res.body).toHaveProperty('closed', true);
     });
 
     it('should handle zero total purchase', async () => {
@@ -264,7 +264,7 @@ describe('Purchases API', () => {
         })
         .expect(201);
 
-      expect(parseFloat(res.body.total)).to.equal(0);
+      expect(parseFloat(res.body.total)).toBe(0);
     });
   });
 
@@ -284,7 +284,7 @@ describe('Purchases API', () => {
         .send({ total: 45.0, closed: true })
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should update own purchase for employee', async () => {
@@ -302,8 +302,8 @@ describe('Purchases API', () => {
         .send({ total: 45.0, closed: true })
         .expect(200);
 
-      expect(parseFloat(res.body.total)).to.equal(45.0);
-      expect(res.body).to.have.property('closed', true);
+      expect(parseFloat(res.body.total)).toBe(45.0);
+      expect(res.body).toHaveProperty('closed', true);
     });
 
     it('should update any purchase for admin', async () => {
@@ -321,7 +321,7 @@ describe('Purchases API', () => {
         .send({ total: 45.0, closed: true })
         .expect(200);
 
-      expect(parseFloat(res.body.total)).to.equal(45.0);
+      expect(parseFloat(res.body.total)).toBe(45.0);
     });
 
     it('should return 404 when updating non-existent purchase', async () => {
@@ -331,7 +331,7 @@ describe('Purchases API', () => {
         .send({ total: 100.0 })
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should allow closing a purchase', async () => {
@@ -349,7 +349,7 @@ describe('Purchases API', () => {
         .send({ closed: true })
         .expect(200);
 
-      expect(res.body).to.have.property('closed', true);
+      expect(res.body).toHaveProperty('closed', true);
     });
   });
 
@@ -368,7 +368,7 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${employeeToken}`)
         .expect(403);
 
-      expect(res.body).to.have.property('error');
+      expect(res.body).toHaveProperty('error');
     });
 
     it('should delete an existing purchase with admin token', async () => {
@@ -384,10 +384,10 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('deleted', true);
+      expect(res.body).toHaveProperty('deleted', true);
 
       const deleted = await db.purchases.findByPk(purchase.id);
-      expect(deleted).to.be.null;
+      expect(deleted).toBeNull();
     });
 
     it('should delete an existing purchase with manager token', async () => {
@@ -403,7 +403,7 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${managerToken}`)
         .expect(200);
 
-      expect(res.body).to.have.property('deleted', true);
+      expect(res.body).toHaveProperty('deleted', true);
     });
 
     it('should return 404 when deleting non-existent purchase', async () => {
@@ -412,7 +412,7 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
   });
 
@@ -429,7 +429,7 @@ describe('Purchases API', () => {
         })
         .expect(201);
 
-      expect(parseFloat(res.body.total)).to.equal(99999.99);
+      expect(parseFloat(res.body.total)).toBe(99999.99);
     });
 
     it('should handle decimal precision correctly', async () => {
@@ -444,7 +444,7 @@ describe('Purchases API', () => {
         })
         .expect(201);
 
-      expect(parseFloat(res.body.total)).to.equal(123.45);
+      expect(parseFloat(res.body.total)).toBe(123.45);
     });
 
     it('should track open vs closed purchases', async () => {
@@ -474,11 +474,11 @@ describe('Purchases API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      const openPurchases = res.body.filter(p => !p.closed);
-      const closedPurchases = res.body.filter(p => p.closed);
+      const openPurchases = res.body.data.filter(p => !p.closed);
+      const closedPurchases = res.body.data.filter(p => p.closed);
 
-      expect(openPurchases).to.have.lengthOf(2);
-      expect(closedPurchases).to.have.lengthOf(1);
+      expect(openPurchases).toHaveLength(2);
+      expect(closedPurchases).toHaveLength(1);
     });
   });
 });

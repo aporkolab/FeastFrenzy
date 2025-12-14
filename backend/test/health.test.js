@@ -1,5 +1,5 @@
 const request = require('supertest');
-const { expect } = require('chai');
+
 const app = require('../server');
 
 describe('Health & Error Handling', () => {
@@ -9,9 +9,9 @@ describe('Health & Error Handling', () => {
         .get('/health')
         .expect(200);
 
-      expect(res.body).to.have.property('status', 'healthy');
-      expect(res.body).to.have.property('timestamp');
-      expect(res.body).to.have.property('uptime');
+      expect(res.body).toHaveProperty('status', 'healthy');
+      expect(res.body).toHaveProperty('timestamp');
+      expect(res.body).toHaveProperty('uptime');
     });
 
     it('should return valid timestamp format', async () => {
@@ -20,8 +20,8 @@ describe('Health & Error Handling', () => {
         .expect(200);
 
       const timestamp = new Date(res.body.timestamp);
-      expect(timestamp).to.be.instanceOf(Date);
-      expect(timestamp.getTime()).to.not.be.NaN;
+      expect(timestamp).toBeInstanceOf(Date);
+      expect(timestamp.getTime()).not.toBeNaN();
     });
 
     it('should return positive uptime', async () => {
@@ -29,8 +29,8 @@ describe('Health & Error Handling', () => {
         .get('/health')
         .expect(200);
 
-      expect(res.body.uptime).to.be.a('number');
-      expect(res.body.uptime).to.be.at.least(0);
+      expect(res.body.uptime).toEqual(expect.any(Number));
+      expect(res.body.uptime).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -40,9 +40,9 @@ describe('Health & Error Handling', () => {
         .get('/this-route-does-not-exist')
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body.error).to.have.property('code', 'NOT_FOUND');
-      expect(res.body.error.message).to.include('not found');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body.error).toHaveProperty('code', 'NOT_FOUND');
+      expect(res.body.error.message).toContain('not found');
     });
 
     it('should return 404 for unknown API routes', async () => {
@@ -50,7 +50,7 @@ describe('Health & Error Handling', () => {
         .get('/api/v2/unknown-endpoint')
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
+      expect(res.body).toHaveProperty('success', false);
     });
 
     it('should include timestamp in error response', async () => {
@@ -58,7 +58,7 @@ describe('Health & Error Handling', () => {
         .get('/nonexistent')
         .expect(404);
 
-      expect(res.body).to.have.property('timestamp');
+      expect(res.body).toHaveProperty('timestamp');
     });
   });
 
@@ -68,11 +68,11 @@ describe('Health & Error Handling', () => {
         .get('/nonexistent-route')
         .expect(404);
 
-      expect(res.body).to.have.property('success', false);
-      expect(res.body).to.have.property('error');
-      expect(res.body.error).to.have.property('code');
-      expect(res.body.error).to.have.property('message');
-      expect(res.body).to.have.property('timestamp');
+      expect(res.body).toHaveProperty('success', false);
+      expect(res.body).toHaveProperty('error');
+      expect(res.body.error).toHaveProperty('code');
+      expect(res.body.error).toHaveProperty('message');
+      expect(res.body).toHaveProperty('timestamp');
     });
   });
 
@@ -82,7 +82,7 @@ describe('Health & Error Handling', () => {
         .get('/health')
         .expect(200);
 
-      expect(res.headers['content-type']).to.include('application/json');
+      expect(res.headers['content-type']).toContain('application/json');
     });
 
     it('should return JSON content type for errors', async () => {
@@ -90,7 +90,7 @@ describe('Health & Error Handling', () => {
         .get('/nonexistent')
         .expect(404);
 
-      expect(res.headers['content-type']).to.include('application/json');
+      expect(res.headers['content-type']).toContain('application/json');
     });
   });
 });

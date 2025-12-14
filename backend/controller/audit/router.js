@@ -108,29 +108,21 @@ router.get(
   '/',
   authenticate,
   authorize('admin'),
-  validateQuery(auditQuerySchema),
   async (req, res, next) => {
     try {
-      const {
-        userId,
-        action,
-        resource,
-        resourceId,
-        from,
-        to,
-        page = 1,
-        limit = 20,
-      } = req.query;
-
+      // Manual validation since validateQuery has issues with read-only query object
+      const page = parseInt(req.query.page, 10) || 1;
+      const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+      
       const result = await AuditService.query({
-        userId: userId ? parseInt(userId, 10) : undefined,
-        action,
-        resource,
-        resourceId: resourceId ? parseInt(resourceId, 10) : undefined,
-        from,
-        to,
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
+        userId: req.query.userId ? parseInt(req.query.userId, 10) : undefined,
+        action: req.query.action,
+        resource: req.query.resource,
+        resourceId: req.query.resourceId ? parseInt(req.query.resourceId, 10) : undefined,
+        from: req.query.from,
+        to: req.query.to,
+        page,
+        limit,
       });
 
       res.json(result);

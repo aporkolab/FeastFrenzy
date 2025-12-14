@@ -157,18 +157,30 @@ class AuditService {
       const offset = (page - 1) * limit;
 
       // Execute query
-      const { count, rows } = await this.model.findAndCountAll({
+      const queryOptions = {
         where,
         order: [['timestamp', 'DESC']],
         limit,
         offset,
-        include: [
-          {
-            association: 'user',
-            attributes: ['id', 'name', 'email'],
-          },
-        ],
-      });
+      };
+      
+      // Only include user association if users model is available
+      try {
+        const db = require('../model');
+        if (db.users) {
+          queryOptions.include = [
+            {
+              association: 'user',
+              attributes: ['id', 'name', 'email'],
+              required: false, // LEFT JOIN - don't fail if user doesn't exist
+            },
+          ];
+        }
+      } catch (e) {
+        // Skip user include if there's an issue
+      }
+      
+      const { count, rows } = await this.model.findAndCountAll(queryOptions);
 
       return {
         data: rows,
@@ -357,6 +369,16 @@ class AuditService {
   sanitize(data) {
     if (!data) return null;
     if (typeof data !== 'object') return data;
+
+    // Handle Sequelize model instances - extract plain data
+    if (data.dataValues) {
+      data = data.dataValues;
+    }
+    
+    // If it's a Sequelize model with toJSON, use that
+    if (typeof data.toJSON === 'function') {
+      data = data.toJSON();
+    }
 
     // Fields that should never be logged
     const sensitiveFields = [

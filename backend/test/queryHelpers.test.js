@@ -1,10 +1,11 @@
+
 const { Op } = require('sequelize');
 const {
   parseSort,
   parseFilters,
   paginatedResponse,
   buildQueryOptions,
-} = require('../../utils/queryHelpers');
+} = require('../utils/queryHelpers');
 
 describe('Query Helpers', () => {
   describe('parseSort', () => {
