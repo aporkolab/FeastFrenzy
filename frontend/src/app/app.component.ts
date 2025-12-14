@@ -4,13 +4,20 @@ import { RouterOutlet, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from './service/auth.service';
 import { User } from './model/auth';
+import { ToastContainerComponent, LoadingSpinnerComponent } from './shared/components';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink]
+  imports: [
+    CommonModule, 
+    RouterOutlet, 
+    RouterLink,
+    ToastContainerComponent,
+    LoadingSpinnerComponent
+  ]
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'feastfrenzy';

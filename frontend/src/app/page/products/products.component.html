@@ -1,109 +1,155 @@
-
-<div *ngIf="isLoading" class="loading">Loading products...</div>
-
-
-<div *ngIf="error" class="error">{{ error }}</div>
-
-
-<div class="filters">
-  <input 
-    type="text" 
-    [(ngModel)]="filters.name" 
-    (ngModelChange)="onFilterChange()"
-    placeholder="Search by name..."
-  />
-  <input 
-    type="number" 
-    [(ngModel)]="filters.minPrice" 
-    (ngModelChange)="onFilterChange()"
-    placeholder="Min price"
-  />
-  <input 
-    type="number" 
-    [(ngModel)]="filters.maxPrice" 
-    (ngModelChange)="onFilterChange()"
-    placeholder="Max price"
-  />
-  <button (click)="clearFilters()">Clear Filters</button>
-</div>
-
-
-<table *ngIf="!isLoading && !error">
-  <thead>
-    <tr>
-      <th (click)="sortBy('id')" class="sortable">
-        ID {{ getSortIcon('id') }}
-      </th>
-      <th (click)="sortBy('name')" class="sortable">
-        Name {{ getSortIcon('name') }}
-      </th>
-      <th (click)="sortBy('price')" class="sortable">
-        Price {{ getSortIcon('price') }}
-      </th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let product of products; trackBy: trackByProductId">
-      <td>{{ product.id }}</td>
-      <td>{{ product.name }}</td>
-      <td>{{ product.price | currency }}</td>
-      <td>
-        <a [routerLink]="['/products', product.id]">View</a>
-        <a [routerLink]="['/products', product.id, 'edit']">Edit</a>
-        <a (click)="deleteProduct(product)" class="delete-link">Delete</a>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<div *ngIf="!isLoading && !error && products.length === 0" class="empty">
-  No products found.
-</div>
-
-
-<div *ngIf="meta.totalPages > 0" class="pagination">
-  <div class="pagination-info">
-    Showing {{ (meta.page - 1) * meta.limit + 1 }} - 
-    {{ meta.page * meta.limit > meta.total ? meta.total : meta.page * meta.limit }} 
-    of {{ meta.total }} products
-  </div>
-  
-  <div class="pagination-controls">
-    <button (click)="previousPage()" [disabled]="!meta.hasPrevPage">
-      ← Previous
-    </button>
-    
-    <span class="page-numbers">
-      <button 
-        *ngFor="let pageNum of getPageNumbers()" 
-        (click)="goToPage(pageNum)"
-        [class.active]="pageNum === meta.page"
-      >
-        {{ pageNum }}
+<!-- Filters Section -->
+<div class="filters card mb-4 p-3">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <input 
+        type="text" 
+        class="form-control"
+        [(ngModel)]="filters.name" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search by name..."
+      />
+    </div>
+    <div class="col-md-3">
+      <input 
+        type="number" 
+        class="form-control"
+        [(ngModel)]="filters.minPrice" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Min price"
+      />
+    </div>
+    <div class="col-md-3">
+      <input 
+        type="number" 
+        class="form-control"
+        [(ngModel)]="filters.maxPrice" 
+        (ngModelChange)="onFilterChange()"
+        placeholder="Max price"
+      />
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+        Clear
       </button>
-    </span>
-    
-    <button (click)="nextPage()" [disabled]="!meta.hasNextPage">
-      Next →
-    </button>
-  </div>
-  
-  <div class="page-size">
-    <label>Items per page:</label>
-    <select 
-      [ngModel]="meta.limit" 
-      (ngModelChange)="onPageSizeChange($event)"
-    >
-      <option *ngFor="let size of pageSizeOptions" [value]="size">
-        {{ size }}
-      </option>
-    </select>
+    </div>
   </div>
 </div>
 
+<!-- Loading State: Table Skeleton -->
+@if (isLoading) {
+  <app-table-skeleton [rows]="meta.limit" [columns]="4"></app-table-skeleton>
+}
 
-<div class="actions">
-  <a routerLink="/products/new" class="add-button">Add Product</a>
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="loadProducts()"
+    [retrying]="isLoading"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && products.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No products found"
+    message="Try adjusting your search criteria or add a new product."
+    actionText="Clear Filters"
+    [showRetry]="false"
+    (action)="clearFilters()"
+  ></app-error-state>
+}
+
+<!-- Data Table -->
+@if (!isLoading && !error && products.length > 0) {
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th (click)="sortBy('id')" class="sortable" role="button">
+            ID <span class="sort-icon">{{ getSortIcon('id') }}</span>
+          </th>
+          <th (click)="sortBy('name')" class="sortable" role="button">
+            Name <span class="sort-icon">{{ getSortIcon('name') }}</span>
+          </th>
+          <th (click)="sortBy('price')" class="sortable" role="button">
+            Price <span class="sort-icon">{{ getSortIcon('price') }}</span>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of products; track product.id) {
+          <tr>
+            <td>{{ product.id }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.price | currency }}</td>
+            <td class="table-actions">
+              <a [routerLink]="['/products', product.id]" class="btn btn-sm btn-outline-primary">View</a>
+              <a [routerLink]="['/products', product.id, 'edit']" class="btn btn-sm btn-outline-secondary">Edit</a>
+              <button (click)="deleteProduct(product)" class="btn btn-sm btn-outline-danger">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Pagination -->
+@if (meta.totalPages > 0 && !isLoading && !error) {
+  <div class="pagination-wrapper d-flex justify-content-between align-items-center flex-wrap gap-3 mt-3">
+    <div class="pagination-info text-muted">
+      Showing {{ (meta.page - 1) * meta.limit + 1 }} - 
+      {{ meta.page * meta.limit > meta.total ? meta.total : meta.page * meta.limit }} 
+      of {{ meta.total }} products
+    </div>
+    
+    <nav aria-label="Products pagination">
+      <ul class="pagination mb-0">
+        <li class="page-item" [class.disabled]="!meta.hasPrevPage">
+          <button class="page-link" (click)="previousPage()" [disabled]="!meta.hasPrevPage">
+            ← Previous
+          </button>
+        </li>
+        
+        @for (pageNum of getPageNumbers(); track pageNum) {
+          <li class="page-item" [class.active]="pageNum === meta.page">
+            <button class="page-link" (click)="goToPage(pageNum)">
+              {{ pageNum }}
+            </button>
+          </li>
+        }
+        
+        <li class="page-item" [class.disabled]="!meta.hasNextPage">
+          <button class="page-link" (click)="nextPage()" [disabled]="!meta.hasNextPage">
+            Next →
+          </button>
+        </li>
+      </ul>
+    </nav>
+    
+    <div class="page-size d-flex align-items-center gap-2">
+      <label class="mb-0 text-muted">Items per page:</label>
+      <select 
+        class="form-select form-select-sm"
+        style="width: auto;"
+        [ngModel]="meta.limit" 
+        (ngModelChange)="onPageSizeChange($event)"
+      >
+        @for (size of pageSizeOptions; track size) {
+          <option [value]="size">{{ size }}</option>
+        }
+      </select>
+    </div>
+  </div>
+}
+
+<!-- Add Product Button -->
+<div class="actions mt-4">
+  <a routerLink="/products/new" class="btn btn-primary">
+    + Add Product
+  </a>
 </div>

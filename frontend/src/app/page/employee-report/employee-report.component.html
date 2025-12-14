@@ -1,29 +1,93 @@
-<table>
-	<thead>
-		<tr>
-			<th>Dolgozó neve</th>
-			<th>Fogyasztás értéke (havi bontásban)</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr *ngFor="let employee of employees">
-			<td>{{ employee.name }}</td>
-			<td>{{ employee.monthlyConsumptionValue }}</td>
-		</tr>
-	</tbody>
-</table>
-<form (ngSubmit)="updatePrices()">
-	<label>
-		Kávé ára:
-		<input type="number" [(ngModel)]="newPrices.coffee" name="coffee">
-	</label>
-	<label>
-		Üdítő ára:
-		<input type="number" [(ngModel)]="newPrices.soda" name="soda">
-	</label>
-	<label>
-		Menü ára:
-		<input type="number" [(ngModel)]="newPrices.menu" name="menu">
-	</label>
-	<input type="submit" value="Árak frissítése">
-</form>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Employee Consumption Report</h2>
+  <a routerLink="/dashboard" class="btn btn-outline-secondary">← Back to Dashboard</a>
+</div>
+
+<!-- Month/Year Filter -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Month</label>
+        <select class="form-select" [(ngModel)]="month" (ngModelChange)="onMonthChange()">
+          <option [value]="0">January</option>
+          <option [value]="1">February</option>
+          <option [value]="2">March</option>
+          <option [value]="3">April</option>
+          <option [value]="4">May</option>
+          <option [value]="5">June</option>
+          <option [value]="6">July</option>
+          <option [value]="7">August</option>
+          <option [value]="8">September</option>
+          <option [value]="9">October</option>
+          <option [value]="10">November</option>
+          <option [value]="11">December</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Year</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          [(ngModel)]="year" 
+          (ngModelChange)="onMonthChange()"
+          min="2020"
+          max="2030"
+        >
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <app-table-skeleton [rows]="8" [columns]="2"></app-table-skeleton>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="loadData()"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && employees.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No employees found"
+    message="There are no employees in the system yet."
+    [showRetry]="false"
+  ></app-error-state>
+}
+
+<!-- Results Table -->
+@if (!isLoading && !error && employees.length > 0) {
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Employee Consumption Summary</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Employee Name</th>
+            <th class="text-end">Monthly Consumption Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (employee of employees; track employee.id) {
+            <tr>
+              <td>{{ employee.name }}</td>
+              <td class="text-end">
+                {{ employeePurchases.get(employee) || employee.monthlyConsumptionValue | currency }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

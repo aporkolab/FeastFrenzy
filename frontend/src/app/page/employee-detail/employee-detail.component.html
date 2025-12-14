@@ -1,27 +1,55 @@
-<div class="container">
-	<h2>Employee Details</h2>
-	
-	
-	<div *ngIf="isLoading" class="text-center">
-		<div class="spinner-border" role="status">
-			<span class="visually-hidden">Loading...</span>
-		</div>
-	</div>
+<!-- Loading State -->
+@if (isLoading) {
+  <div class="row">
+    <div class="col-md-6">
+      <app-form-skeleton [fields]="3" [showTitle]="true" [showActions]="true"></app-form-skeleton>
+    </div>
+  </div>
+}
 
-	
-	<div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="loadEmployee()"
+    actionText="Go Back"
+    (action)="goBack()"
+  ></app-error-state>
+}
 
-	
-	<form *ngIf="employee">
-		<div class="form-group mb-3">
-			<label for="name">Name:</label>
-			<input type="text" class="form-control" id="name" [(ngModel)]="employee.name" name="name" disabled>
-		</div>
-		<div class="form-group mb-3">
-			<label for="employeeNumber">Employee Number:</label>
-			<input type="text" class="form-control" id="employeeNumber" [(ngModel)]="employee.employee_number"
-				name="employeeNumber" disabled>
-		</div>
-		<button type="button" class="btn btn-secondary" routerLink="/employees">Back</button>
-	</form>
-</div>
+<!-- Employee Detail -->
+@if (employee && !isLoading && !error) {
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Employee Details</h4>
+      <span class="badge bg-secondary">#{{ employee.id }}</span>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label text-muted">Name</label>
+        <p class="fs-5 mb-0">{{ employee.name }}</p>
+      </div>
+      
+      <div class="mb-3">
+        <label class="form-label text-muted">Employee Number</label>
+        <p class="fs-5 mb-0">{{ employee.employee_number }}</p>
+      </div>
+      
+      <div class="mb-3">
+        <label class="form-label text-muted">Monthly Consumption</label>
+        <p class="fs-5 mb-0 text-success">{{ employee.monthlyConsumptionValue | currency }}</p>
+      </div>
+
+      <hr>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+          ← Go Back
+        </button>
+        <a [routerLink]="['/employees', employee.id, 'edit']" class="btn btn-primary">
+          Edit Employee
+        </a>
+      </div>
+    </div>
+  </div>
+}

@@ -1,32 +1,115 @@
-<table>
-	<tr>
-		<th>Product ID</th>
-		<th>Name</th>
-		<th>Consumption Quantity</th>
-		<th>Price</th>
-	</tr>
-	<tr *ngFor="let product of products">
-		<td>{{product.id}}</td>
-		<td>{{product.name}}</td>
-		<td>{{product.quantity}}</td>
-		<td>{{product.price}}</td>
-	</tr>
-</table>
-<div class="form-group">
-	<label for="monthSelect">Select Month</label>
-	<select class="form-control" id="monthSelect" [(ngModel)]="selectedMonth" name="month">
-		<option value="january">January</option>
-		<option value="february">February</option>
-		<option value="march">March</option>
-		<option value="april">April</option>
-		<option value="may">May</option>
-		<option value="june">June</option>
-		<option value="july">July</option>
-		<option value="august">August</option>
-		<option value="september">September</option>
-		<option value="october">October</option>
-		<option value="november">November</option>
-		<option value="december">December</option>
-	</select>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Purchase Report</h2>
+  <a routerLink="/dashboard" class="btn btn-outline-secondary">← Back to Dashboard</a>
 </div>
-<button class="btn btn-primary" (click)="getPurchaseReport()">Get Report</button>
+
+<!-- Filter Form -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label" for="monthSelect">Select Month</label>
+        <select class="form-select" id="monthSelect" [(ngModel)]="selectedMonth" name="month">
+          <option value="">-- Select Month --</option>
+          <option value="january">January</option>
+          <option value="february">February</option>
+          <option value="march">March</option>
+          <option value="april">April</option>
+          <option value="may">May</option>
+          <option value="june">June</option>
+          <option value="july">July</option>
+          <option value="august">August</option>
+          <option value="september">September</option>
+          <option value="october">October</option>
+          <option value="november">November</option>
+          <option value="december">December</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button 
+          class="btn btn-primary w-100" 
+          (click)="getPurchaseReport()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Get Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <app-table-skeleton [rows]="8" [columns]="5"></app-table-skeleton>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="getPurchaseReport()"
+  ></app-error-state>
+}
+
+<!-- Empty State (after search) -->
+@if (!isLoading && !error && hasSearched && purchases.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No purchases found"
+    message="No purchases were made during the selected month."
+    [showRetry]="false"
+  ></app-error-state>
+}
+
+<!-- Results Table -->
+@if (!isLoading && !error && purchases.length > 0) {
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Purchase Report - {{ selectedMonth | titlecase }}</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Purchase ID</th>
+            <th>Employee ID</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th class="text-end">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (purchase of purchases; track purchase.id) {
+            <tr>
+              <td>{{ purchase.id }}</td>
+              <td>{{ purchase.employeeId }}</td>
+              <td>{{ purchase.date | date:'mediumDate' }}</td>
+              <td>
+                <span 
+                  class="badge"
+                  [class.bg-success]="purchase.closed"
+                  [class.bg-warning]="!purchase.closed"
+                >
+                  {{ purchase.closed ? 'Closed' : 'Open' }}
+                </span>
+              </td>
+              <td class="text-end fw-bold">{{ purchase.total | currency }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- Initial State (before search) -->
+@if (!isLoading && !error && !hasSearched) {
+  <div class="text-center text-muted p-5">
+    <div class="fs-1 mb-3">🛒</div>
+    <p>Select a month and click "Get Report" to view purchase data.</p>
+  </div>
+}

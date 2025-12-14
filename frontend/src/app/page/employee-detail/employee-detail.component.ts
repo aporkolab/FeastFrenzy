@@ -6,13 +6,20 @@ import { Subject, takeUntil } from 'rxjs';
 import { Employee } from '../../model/employee';
 import { EmployeeService } from '../../service/employee.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormSkeletonComponent, ErrorStateComponent } from 'src/app/shared/components';
 
 @Component({
   selector: 'app-employee-detail',
   templateUrl: './employee-detail.component.html',
-  styleUrls: ['./employee-detail.component.css'],
+  styleUrls: ['./employee-detail.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink]
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    RouterLink,
+    FormSkeletonComponent,
+    ErrorStateComponent
+  ]
 })
 export class EmployeeDetailComponent implements OnInit, OnDestroy {
   employee: Employee | null = null;
@@ -36,7 +43,7 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadEmployee(): void {
+  loadEmployee(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
 
     if (!idParam) {

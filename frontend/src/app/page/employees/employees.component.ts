@@ -5,13 +5,20 @@ import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { Employee } from 'src/app/model/employee';
 import { EmployeeService } from 'src/app/service/employee.service';
+import { TableSkeletonComponent, ErrorStateComponent } from 'src/app/shared/components';
 
 @Component({
   selector: 'app-employees',
   templateUrl: './employees.component.html',
-  styleUrls: ['./employees.component.css'],
+  styleUrls: ['./employees.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink]
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    RouterLink,
+    TableSkeletonComponent,
+    ErrorStateComponent
+  ]
 })
 export class EmployeesComponent implements OnInit, OnDestroy {
   employees: Employee[] = [];

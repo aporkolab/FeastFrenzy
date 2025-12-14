@@ -6,13 +6,21 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Product } from 'src/app/model/product';
 import { ProductService } from 'src/app/service/product.service';
 import { PaginationMeta, PAGE_SIZE_OPTIONS, ProductQueryParams } from 'src/app/model/pagination';
+import { TableSkeletonComponent, ErrorStateComponent } from 'src/app/shared/components';
+import { ToastService } from 'src/app/shared/services';
 
 @Component({
   selector: 'app-products',
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink]
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    RouterLink,
+    TableSkeletonComponent,
+    ErrorStateComponent
+  ]
 })
 export class ProductsComponent implements OnInit, OnDestroy {
   products: Product[] = [];

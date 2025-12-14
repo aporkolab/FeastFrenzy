@@ -1,35 +1,69 @@
 import { Product } from './../../model/product';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil, finalize } from 'rxjs';
+import { TableSkeletonComponent, ErrorStateComponent } from 'src/app/shared/components';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-product-report',
   templateUrl: './product-report.component.html',
-  styles: [''],
+  styleUrls: ['./product-report.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [
+    CommonModule, 
+    FormsModule,
+    TableSkeletonComponent,
+    ErrorStateComponent
+  ]
 })
-export class ProductReportComponent implements OnInit {
-
+export class ProductReportComponent implements OnInit, OnDestroy {
   products: Product[] = [];
-  selectedMonth!: string;
+  selectedMonth = '';
+  isLoading = false;
+  error: string | null = null;
+  hasSearched = false;
 
-  constructor(private http: HttpClient, private router: Router) { }
+  private destroy$ = new Subject<void>();
 
-  ngOnInit() {
+  constructor(private http: HttpClient, private router: Router) {}
+
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getProductReport(): void {
-    this.http.get<Product[]>(`/products?month = ${this.selectedMonth}`).subscribe(data => {
-      this.products = data;
-    });
+    if (!this.selectedMonth) {
+      this.error = 'Please select a month';
+      return;
+    }
+
+    this.isLoading = true;
+    this.error = null;
+    this.hasSearched = true;
+
+    this.http.get<Product[]>(`${environment.apiUrl}/products?month=${this.selectedMonth}`)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe({
+        next: (data) => {
+          this.products = data;
+        },
+        error: (err) => {
+          this.error = err.message || 'Failed to load product report';
+        }
+      });
   }
 
   goBack(): void {
     this.router.navigate(['/']);
   }
-
 }

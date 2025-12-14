@@ -1,59 +1,128 @@
 <div class="purchases-container">
-	<div *ngIf="error" class="error-message">
-		{{ error }}
-		<button (click)="error = null">Dismiss</button>
-	</div>
+  <!-- Loading State -->
+  @if (isLoading) {
+    <app-table-skeleton [rows]="8" [columns]="5"></app-table-skeleton>
+  }
 
-	<div *ngIf="isLoading" class="loading">Loading purchases...</div>
+  <!-- Error State -->
+  @if (error && !isLoading) {
+    <app-error-state 
+      [message]="error"
+      (retry)="loadPurchases()"
+    ></app-error-state>
+  }
 
-	<table *ngIf="!isLoading">
-		<thead>
-			<tr>
-				<th>Employee ID</th>
-				<th>Total</th>
-				<th>Date</th>
-				<th>Status</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr *ngFor="let purchase of purchases; trackBy: trackByPurchaseId">
-				<td>{{ purchase.employeeId }}</td>
-				<td>{{ purchase.total | currency }}</td>
-				<td>{{ purchase.date | date:'short' }}</td>
-				<td>{{ purchase.closed ? 'Closed' : 'Open' }}</td>
-				<td>
-					<button (click)="editPurchase(purchase)">Edit</button>
-					<button (click)="deletePurchase(purchase)">Delete</button>
-				</td>
-			</tr>
-			<tr *ngIf="purchases.length === 0">
-				<td colspan="5">No purchases found</td>
-			</tr>
-		</tbody>
-	</table>
+  <!-- Empty State -->
+  @if (!isLoading && !error && purchases.length === 0) {
+    <app-error-state
+      type="empty"
+      title="No purchases found"
+      message="Create your first purchase using the form below."
+      [showRetry]="false"
+    ></app-error-state>
+  }
 
-	<form (ngSubmit)="addPurchase()" class="purchase-form">
-		<h3>{{ editingPurchase ? 'Edit Purchase' : 'Add Purchase' }}</h3>
-		<label>
-			Employee ID:
-			<input type="number" [(ngModel)]="formData.employeeId" name="employeeId" required>
-		</label>
-		<label>
-			Date:
-			<input type="date" [(ngModel)]="formData.date" name="date" required>
-		</label>
-		<label>
-			Total:
-			<input type="number" [(ngModel)]="formData.total" name="total" step="0.01" min="0">
-		</label>
-		<label>
-			<input type="checkbox" [(ngModel)]="formData.closed" name="closed">
-			Closed
-		</label>
-		<div class="form-actions">
-			<button type="submit">{{ editingPurchase ? 'Update' : 'Add' }} Purchase</button>
-			<button type="button" *ngIf="editingPurchase" (click)="cancelEdit()">Cancel</button>
-		</div>
-	</form>
+  <!-- Data Table -->
+  @if (!isLoading && !error && purchases.length > 0) {
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Employee ID</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (purchase of purchases; track purchase.id) {
+            <tr>
+              <td>{{ purchase.employeeId }}</td>
+              <td>{{ purchase.total | currency }}</td>
+              <td>{{ purchase.date | date:'short' }}</td>
+              <td>
+                <span 
+                  class="badge"
+                  [class.bg-success]="purchase.closed"
+                  [class.bg-warning]="!purchase.closed"
+                >
+                  {{ purchase.closed ? 'Closed' : 'Open' }}
+                </span>
+              </td>
+              <td class="table-actions">
+                <button (click)="editPurchase(purchase)" class="btn btn-sm btn-outline-secondary">Edit</button>
+                <button (click)="deletePurchase(purchase)" class="btn btn-sm btn-outline-danger">Delete</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Purchase Form -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5 class="mb-0">{{ editingPurchase ? 'Edit Purchase' : 'Add Purchase' }}</h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="addPurchase()" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Employee ID</label>
+          <input 
+            type="number" 
+            class="form-control"
+            [(ngModel)]="formData.employeeId" 
+            name="employeeId" 
+            required
+          >
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Date</label>
+          <input 
+            type="date" 
+            class="form-control"
+            [(ngModel)]="formData.date" 
+            name="date" 
+            required
+          >
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Total</label>
+          <input 
+            type="number" 
+            class="form-control"
+            [(ngModel)]="formData.total" 
+            name="total" 
+            step="0.01" 
+            min="0"
+          >
+        </div>
+        <div class="col-md-3">
+          <label class="form-label d-block">&nbsp;</label>
+          <div class="form-check">
+            <input 
+              type="checkbox" 
+              class="form-check-input"
+              [(ngModel)]="formData.closed" 
+              name="closed"
+              id="closedCheck"
+            >
+            <label class="form-check-label" for="closedCheck">Closed</label>
+          </div>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">
+            {{ editingPurchase ? 'Update' : 'Add' }} Purchase
+          </button>
+          @if (editingPurchase) {
+            <button type="button" class="btn btn-outline-secondary ms-2" (click)="cancelEdit()">
+              Cancel
+            </button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

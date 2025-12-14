@@ -1,6 +1,43 @@
-<div *ngIf="product">
-	<p>{{product.id}}</p>
-	<h2>{{product.name}}</h2>
-	<p>Price: {{product.price}}</p>
-	<button (click)="goBack()">Go Back</button>
-</div>
+<!-- Loading State -->
+@if (isLoading) {
+  <div class="row">
+    <div class="col-md-6">
+      <app-card-skeleton [showImage]="false" [textLines]="4" [showAction]="true"></app-card-skeleton>
+    </div>
+  </div>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="loadProduct()"
+    actionText="Go Back"
+    (action)="goBack()"
+  ></app-error-state>
+}
+
+<!-- Product Detail -->
+@if (product && !isLoading && !error) {
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Product Details</h4>
+      <span class="badge bg-secondary">#{{ product.id }}</span>
+    </div>
+    <div class="card-body">
+      <h2 class="card-title">{{ product.name }}</h2>
+      <p class="card-text fs-4 text-success">{{ product.price | currency }}</p>
+      
+      <hr>
+      
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+          ← Go Back
+        </button>
+        <a [routerLink]="['/products', product.id, 'edit']" class="btn btn-primary">
+          Edit Product
+        </a>
+      </div>
+    </div>
+  </div>
+}

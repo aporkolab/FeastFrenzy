@@ -4,13 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Purchase, CreatePurchaseDto } from 'src/app/model/purchase';
 import { PurchaseService } from 'src/app/service/purchase.service';
+import { TableSkeletonComponent, ErrorStateComponent } from 'src/app/shared/components';
 
 @Component({
   selector: 'app-purchases',
   templateUrl: './purchases.component.html',
   styleUrls: ['./purchases.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [
+    CommonModule, 
+    FormsModule,
+    TableSkeletonComponent,
+    ErrorStateComponent
+  ]
 })
 export class PurchasesComponent implements OnInit, OnDestroy {
   purchases: Purchase[] = [];

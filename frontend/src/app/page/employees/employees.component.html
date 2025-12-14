@@ -1,21 +1,67 @@
-<table>
-	<tr>
-		<th>ID</th>
-		<th>Name</th>
-		<th>Employee Number</th>
-		<th>Monthly Consumption</th>
-		<th>Actions</th>
-	</tr>
-	<tr *ngFor="let employee of employees">
-		<td>{{employee.id}}</td>
-		<td>{{employee.name}}</td>
-		<td>{{employee.employee_number}}</td>
-		<td>{{employee.monthlyConsumptionValue}}</td>
-		<td>
-			<a routerLink="/employees/{{employee.id}}">View</a>
-			<a routerLink="/employees/{{employee.id}}/edit">Edit</a>
-			<a (click)="deleteEmployee(employee)">Delete</a>
-		</td>
-	</tr>
-</table>
-<a routerLink="/employees/new">Add Employee</a>
+<!-- Loading State -->
+@if (isLoading) {
+  <app-table-skeleton [rows]="8" [columns]="5"></app-table-skeleton>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="loadEmployees()"
+  ></app-error-state>
+}
+
+<!-- Empty State -->
+@if (!isLoading && !error && employees.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No employees found"
+    message="Add your first employee to get started."
+    [showRetry]="false"
+  ></app-error-state>
+}
+
+<!-- Data Table -->
+@if (!isLoading && !error && employees.length > 0) {
+  <!-- Summary Card -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Monthly Consumption Summary</h5>
+      <p class="card-text display-6">{{ monthlyConsumptionValue | currency }}</p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Employee Number</th>
+          <th>Monthly Consumption</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (employee of employees; track employee.id) {
+          <tr>
+            <td>{{ employee.id }}</td>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.employee_number }}</td>
+            <td>{{ employee.monthlyConsumptionValue | currency }}</td>
+            <td class="table-actions">
+              <a [routerLink]="['/employees', employee.id]" class="btn btn-sm btn-outline-primary">View</a>
+              <a [routerLink]="['/employees', employee.id, 'edit']" class="btn btn-sm btn-outline-secondary">Edit</a>
+              <button (click)="deleteEmployee(employee)" class="btn btn-sm btn-outline-danger">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Add Employee Button -->
+<div class="mt-4">
+  <a routerLink="/employees/new" class="btn btn-primary">+ Add Employee</a>
+</div>

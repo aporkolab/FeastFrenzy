@@ -1,40 +1,104 @@
-<div class="container">
-	<form>
-		<div class="form-group">
-			<label for="monthSelect">Select Month</label>
-			<select class="form-control" id="monthSelect" [(ngModel)]="selectedMonth" name="month">
-				<option value="january">January</option>
-				<option value="february">February</option>
-				<option value="march">March</option>
-				<option value="april">April</option>
-				<option value="may">May</option>
-				<option value="june">June</option>
-				<option value="july">July</option>
-				<option value="august">August</option>
-				<option value="september">September</option>
-				<option value="october">October</option>
-				<option value="november">November</option>
-				<option value="december">December</option>
-			</select>
-		</div>
-		<button class="btn btn-primary" (click)="getProductReport()">Get Report</button>
-	</form>
-
-	<table class="table">
-		<thead>
-			<tr>
-				<th>Product ID</th>
-				<th>Name</th>
-				<th>Consumption Quantity</th>
-				<th>Price</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr *ngFor="let product of products">
-				<td>{{ product.id }}</td>
-				<td>{{ product.name }}</td>
-				<td>{{ product.price }}</td>
-			</tr>
-		</tbody>
-	</table>
+<!-- Filter Form -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label" for="monthSelect">Select Month</label>
+        <select class="form-select" id="monthSelect" [(ngModel)]="selectedMonth" name="month">
+          <option value="">-- Select Month --</option>
+          <option value="january">January</option>
+          <option value="february">February</option>
+          <option value="march">March</option>
+          <option value="april">April</option>
+          <option value="may">May</option>
+          <option value="june">June</option>
+          <option value="july">July</option>
+          <option value="august">August</option>
+          <option value="september">September</option>
+          <option value="october">October</option>
+          <option value="november">November</option>
+          <option value="december">December</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button 
+          class="btn btn-primary w-100" 
+          (click)="getProductReport()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          Get Report
+        </button>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-outline-secondary w-100" (click)="goBack()">
+          ← Back
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Loading State -->
+@if (isLoading) {
+  <app-table-skeleton [rows]="8" [columns]="4"></app-table-skeleton>
+}
+
+<!-- Error State -->
+@if (error && !isLoading) {
+  <app-error-state 
+    [message]="error"
+    (retry)="getProductReport()"
+  ></app-error-state>
+}
+
+<!-- Empty State (after search) -->
+@if (!isLoading && !error && hasSearched && products.length === 0) {
+  <app-error-state
+    type="empty"
+    title="No products found"
+    message="No products were consumed during the selected month."
+    [showRetry]="false"
+  ></app-error-state>
+}
+
+<!-- Results Table -->
+@if (!isLoading && !error && products.length > 0) {
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Product Consumption Report - {{ selectedMonth | titlecase }}</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Product ID</th>
+            <th>Name</th>
+            <th>Consumption Quantity</th>
+            <th class="text-end">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products; track product.id) {
+            <tr>
+              <td>{{ product.id }}</td>
+              <td>{{ product.name }}</td>
+              <td>-</td>
+              <td class="text-end">{{ product.price | currency }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- Initial State (before search) -->
+@if (!isLoading && !error && !hasSearched) {
+  <div class="text-center text-muted p-5">
+    <div class="fs-1 mb-3">📊</div>
+    <p>Select a month and click "Get Report" to view product consumption data.</p>
+  </div>
+}
