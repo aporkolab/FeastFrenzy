@@ -136,7 +136,7 @@
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
-    "@babel/core": "^7.23.0",
+    "@babel/core": "^8.0.7",
     "@babel/preset-env": "^7.23.0",
     "babel-jest": "^29.7.0",
     "eslint": "^8.57.1",
