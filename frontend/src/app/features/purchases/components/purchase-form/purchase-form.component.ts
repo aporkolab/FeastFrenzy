@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, S
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { Purchase, CreatePurchaseDto } from 'src/app/model/purchase';
+import type { Purchase, CreatePurchaseDto } from 'src/app/model/purchase';
 import { PurchaseItem } from 'src/app/model/purchase-item';
 import { Employee } from 'src/app/model/employee';
 import { Product } from 'src/app/model/product';
